@@ -2,8 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+/* global.css */
+
+/* Set the base font size for the body */
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Arial', sans-serif; /* or any font family of your choice */
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.6; /* Makes the text more readable */
+}
+
+/* Increase font size for headings */
+h1, h2, h3, h4, h5, h6 {
+  font-size: 1.5rem; /* Adjust to make headings bigger */
+  margin-bottom: 0.5rem; /* Optional: space between headings and next elements */
+}
+
+/* Example for paragraph text */
+p {
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.75; /* For better readability */
+}
+
+/* Increase size for other important elements */
+a {
+  font-size: 1.125rem; /* 18px */
+}
+
+button, input, textarea {
+  font-size: 1.125rem; /* 18px */
+}
+
+/* Add some spacing adjustments to make it more comfortable */
+* {
+  box-sizing: border-box; /* Ensures padding and borders are included in width/height */
+  margin: 0;
+  padding: 0;
 }
 
 @layer base {

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { useSession } from "next-auth/react";
 
 export default function ProjectsPage() {
@@ -28,6 +28,7 @@ export default function ProjectsPage() {
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectUrl, setNewProjectUrl] = useState("");
   const [newProjectDescription, setNewProjectDescription] = useState("");
+  const [isEditing, setIsEditing] = useState(false); // Track if editing or adding a project
 
   useEffect(() => {
     // Fetch projects only if session is available
@@ -39,7 +40,7 @@ export default function ProjectsPage() {
   const fetchProjects = async () => {
     try {
       const response = await fetch(
-        "https://domain-rank-node.onrender.com/projects",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/projects`,
         {
           headers: {
             Authorization: `Bearer ${session.user.token}`,
@@ -49,7 +50,11 @@ export default function ProjectsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setProjects(data); // Set projects from response
+
+        const sortedProjects = data.sort(
+          (a, b) => new Date(b.created_date) - new Date(a.created_date)
+        );
+        setProjects(sortedProjects); // Set the sorted projects
       } else {
         alert("Failed to fetch projects.");
       }
@@ -60,11 +65,14 @@ export default function ProjectsPage() {
 
   const addNewProject = () => {
     setIsSidebarOpen(true);
+    setIsEditing(false); // Set to false for new project creation
+    setNewProjectName("");
+    setNewProjectUrl("");
+    setNewProjectDescription("");
   };
 
   const saveNewProject = async () => {
     if (!session?.user?.token) {
-      // Handle case when there is no valid session or token
       alert("You are not logged in.");
       return;
     }
@@ -72,12 +80,12 @@ export default function ProjectsPage() {
     const newProject = {
       name: newProjectName,
       domain_name: newProjectUrl,
-      status: "Active",
+      description: newProjectDescription,
     };
 
     try {
       const response = await fetch(
-        "https://domain-rank-node.onrender.com/projects",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/projects`,
         {
           method: "POST",
           headers: {
@@ -91,7 +99,7 @@ export default function ProjectsPage() {
       const result = await response.json();
 
       if (response.ok) {
-        setProjects([...projects, result.project]);
+        setProjects([result.project, ...projects]);
         setIsSidebarOpen(false);
         setNewProjectName("");
         setNewProjectUrl("");
@@ -102,6 +110,91 @@ export default function ProjectsPage() {
     } catch (error) {
       console.error("Error creating project:", error);
       alert("There was an error creating the project.");
+    }
+  };
+
+  const handleSaveEditedProject = async () => {
+    if (!session?.user?.token) {
+      alert("You are not logged in.");
+      return;
+    }
+
+    const updatedProject = {
+      name: newProjectName,
+      domain_name: newProjectUrl,
+      description: newProjectDescription,
+      updated_by: session.user.id, // Add updated_by to pass the user ID
+    };
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/projects/${selectedProject.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.user.token}`,
+          },
+          body: JSON.stringify(updatedProject),
+        }
+      );
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setProjects(
+          projects.map((project) =>
+            project.id === selectedProject.id
+              ? { ...project, ...updatedProject }
+              : project
+          )
+        );
+        setIsSidebarOpen(false);
+        setNewProjectName("");
+        setNewProjectUrl("");
+        setNewProjectDescription("");
+      } else {
+        alert(`Error: ${result.error || result.message}`);
+      }
+    } catch (error) {
+      console.error("Error updating project:", error);
+      alert("There was an error updating the project.");
+    }
+  };
+
+  const handleEditProject = (projectId) => {
+    console.log(projectId);
+    const projectToEdit = projects.find((project) => project.id === projectId);
+    setIsEditing(true); // Set to true for editing mode
+    setIsSidebarOpen(true);
+    setSelectedProject(projectToEdit);
+    setNewProjectName(projectToEdit.name);
+    setNewProjectUrl(projectToEdit.domain_name);
+    setNewProjectDescription(projectToEdit.description || "");
+  };
+
+  const handleDeleteProject = async (projectId) => {
+    console.log("Delete project ID:", projectId);
+    if (window.confirm("Are you sure you want to delete this project?")) {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/projects/${projectId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${session.user.token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          setProjects(projects.filter((project) => project.id !== projectId));
+        } else {
+          alert("Failed to delete the project.");
+        }
+      } catch (error) {
+        console.error("Error deleting project:", error);
+      }
     }
   };
 
@@ -117,12 +210,10 @@ export default function ProjectsPage() {
     router.push(`/projects/${slug}`);
   };
 
-  // Show loading message if session is loading
   if (status === "loading") {
     return <div>Loading...</div>;
   }
 
-  // Show login prompt if session is not authenticated
   if (status === "unauthenticated") {
     return <div>Please log in to view projects.</div>;
   }
@@ -140,7 +231,7 @@ export default function ProjectsPage() {
             >
               <SelectTrigger className="w-[500px] h-[50px] text-lg bg-white">
                 <SelectValue>
-                  {selectedProject || "Select a project"}
+                  {selectedProject ? selectedProject.name : "Select a project"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -179,17 +270,35 @@ export default function ProjectsPage() {
           {filteredProjects.map((project, index) => (
             <Card
               key={index}
-              onClick={() => handleProjectClick(project.id)}
               className="cursor-pointer"
+              onClick={() => handleProjectClick(project.id)}
             >
               <CardHeader>
                 <CardTitle>{project.name}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p>Description of {project.name}</p>
+                <p>{project.domain_name}</p>
               </CardContent>
-              <CardContent>
-                <p> {project.domain_name}</p>
+              <CardContent className="flex justify-end gap-2">
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditProject(project.id);
+                  }}
+                  variant="outline"
+                >
+                  <FaEdit className="mr-1" /> Edit
+                </Button>
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteProject(project.id);
+                  }}
+                  variant="outline"
+                >
+                  <FaTrash className="mr-1" /> Delete
+                </Button>
               </CardContent>
             </Card>
           ))}
@@ -201,7 +310,9 @@ export default function ProjectsPage() {
           isSidebarOpen ? "translate-x-0" : "translate-x-full"
         } transition-transform duration-300`}
       >
-        <h2 className="mb-6 font-bold">Add New Project</h2>
+        <h2 className="text-xl mb-4">
+          {isEditing ? "Edit Project" : "Add New Project"}
+        </h2>
 
         <div>
           <label className="block font-bold">Project Name</label>
@@ -237,7 +348,11 @@ export default function ProjectsPage() {
         </div>
 
         <div className="flex gap-2">
-          <Button onClick={saveNewProject}>Save Project</Button>
+          <Button
+            onClick={isEditing ? handleSaveEditedProject : saveNewProject}
+          >
+            {isEditing ? "Save Changes" : "Create Project"}
+          </Button>
           <Button onClick={() => setIsSidebarOpen(false)} variant="outline">
             Cancel
           </Button>

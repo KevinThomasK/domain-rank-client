@@ -21,7 +21,7 @@ const Register = () => {
 
     try {
       const response = await fetch(
-        "https://domain-rank-node.onrender.com/register",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/register`,
         {
           method: "POST",
           headers: {

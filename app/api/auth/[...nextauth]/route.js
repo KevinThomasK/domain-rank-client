@@ -12,7 +12,7 @@ export const authOptions = {
 
         try {
           const response = await fetch(
-            "https://domain-rank-node.onrender.com/login",
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/login`,
             {
               method: "POST",
               headers: {

@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSession } from "next-auth/react";
+import { BsCloudCheck } from "react-icons/bs";
 
 export default function SingleProjectPage() {
   const { data: session, status } = useSession();
@@ -29,13 +30,17 @@ export default function SingleProjectPage() {
   const [newKeyword, setNewKeyword] = useState("");
   const [project, setProject] = useState("");
   const [selectedSearchEngine, setSelectedSearchEngine] = useState("Google");
+  const [position, setPosition] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [searchPositionData, setSearchPositionData] = useState([]);
+  const [isSearchPositionVisible, setIsSearchPositionVisible] = useState(false);
 
   // Fetch project details
   useEffect(() => {
     const fetchProjectDetails = async () => {
       try {
         const response = await fetch(
-          `https://domain-rank-node.onrender.com/projects/${slug}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/projects/${slug}`,
           {
             method: "GET",
             headers: {
@@ -63,7 +68,7 @@ export default function SingleProjectPage() {
     const fetchKeywords = async () => {
       try {
         const response = await fetch(
-          `https://domain-rank-node.onrender.com/keywords/${slug}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/keywords/${slug}`,
           {
             method: "GET",
             headers: {
@@ -95,13 +100,126 @@ export default function SingleProjectPage() {
     );
   };
 
-  const handleDelete = (index) => {
-    const updatedKeywords = keywordsData.filter((_, idx) => idx !== index);
-    setKeywordsData(updatedKeywords);
+  const handleDelete = async (index) => {
+    const keywordId = keywordsData[index].id;
+    const keywordName = keywordsData[index].keyword;
+
+    const isConfirmed = window.confirm(
+      `Are you sure you want to delete the keyword "${keywordName}"?`
+    );
+
+    if (!isConfirmed) {
+      return;
+    }
+
+    // Send the DELETE request to the backend API
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/keywords/${keywordId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${session?.user.token}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+      if (response.ok) {
+        // Remove the deleted keyword from the keywordsData array in state
+        const updatedKeywords = keywordsData.filter((_, idx) => idx !== index);
+        setKeywordsData(updatedKeywords);
+      } else {
+        console.error("Error deleting keyword:", result.error);
+      }
+    } catch (error) {
+      console.error("Failed to delete keyword:", error);
+    }
   };
 
-  const handleRefresh = (index) => {
-    console.log("Refresh for index", index);
+  const fetchKeywordPosition = async (url, keyword) => {
+    const maxResultsToCheck = 100;
+    const resultsPerPage = 10;
+
+    for (let start = 1; start <= maxResultsToCheck; start += resultsPerPage) {
+      try {
+        const response = await fetch(
+          `/api/search?query=${encodeURIComponent(keyword)}&start=${start}`
+        );
+        const data = await response.json();
+
+        if (data.items) {
+          const positionInPage = data.items.findIndex((item) =>
+            item.link.startsWith(url)
+          );
+
+          if (positionInPage !== -1) {
+            return start + positionInPage;
+          }
+        } else {
+          break;
+        }
+      } catch (error) {
+        console.error("Error fetching search results:", error);
+        throw new Error("Failed to fetch search results");
+      }
+    }
+
+    return "Not Found";
+  };
+
+  const handleSearchPosition = async (index) => {
+    setLoading(true);
+    setPosition(null);
+    const url = project.domain_name;
+    const keyword = keywordsData[index].keyword;
+
+    try {
+      const resultPosition = await fetchKeywordPosition(url, keyword);
+      setPosition(resultPosition);
+
+      const keywordId = keywordsData[index].id;
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/keywords/${keywordId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.user.token}`,
+          },
+          body: JSON.stringify({
+            latest_manual_check_rank: resultPosition,
+          }),
+        }
+      );
+
+      const result = await response.json();
+      if (response.ok) {
+        setKeywordsData((prevKeywordsData) =>
+          prevKeywordsData.map((keywordData, idx) =>
+            idx === index
+              ? { ...keywordData, latest_manual_check_rank: resultPosition }
+              : keywordData
+          )
+        );
+
+        // Store the search result data in the state
+        setSearchPositionData((prevData) => [
+          ...prevData,
+          { keyword, domain: url, position: resultPosition },
+        ]);
+
+        // Make the position result table visible
+        setIsSearchPositionVisible(true);
+      } else {
+        console.error("Error updating keyword rank:", result.message);
+      }
+    } catch (error) {
+      console.error("Error fetching position:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleHistory = (index) => {
@@ -115,15 +233,14 @@ export default function SingleProjectPage() {
       keyword: newKeyword,
       search_engine: selectedSearchEngine,
       search_location: "Default Location",
-      latest_auto_search_rank: 0, // Default value for auto search rank
-      latest_manual_check_rank: 0, // Default value for manual check rank
-      status: "Active", // Default status
+      latest_auto_search_rank: 0,
+      latest_manual_check_rank: 0,
+      status: "Active",
     };
 
-    // Send the data to the backend API
     try {
       const response = await fetch(
-        "https://domain-rank-node.onrender.com/keywords",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/keywords`,
         {
           method: "POST",
           headers: {
@@ -156,6 +273,68 @@ export default function SingleProjectPage() {
     }
   };
 
+  const handleAutoRankCheck = async () => {
+    setLoading(true);
+    const updatedSearchPositionData = [];
+
+    try {
+      for (const keywordData of keywordsData) {
+        const keyword = keywordData.keyword;
+        const url = project.domain_name;
+        console.log(keyword, "key word name");
+        // Fetch the position for each keyword
+        const resultPosition = await fetchKeywordPosition(url, keyword);
+
+        // Update the keyword's latest_auto_search_rank
+        const keywordId = keywordData.id;
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/keywordsauto/${keywordId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session?.user.token}`,
+            },
+            body: JSON.stringify({
+              latest_auto_search_rank: resultPosition,
+            }),
+          }
+        );
+
+        const result = await response.json();
+        if (response.ok) {
+          setKeywordsData((prevKeywordsData) =>
+            prevKeywordsData.map((data) =>
+              data.id === keywordId
+                ? { ...data, latest_auto_search_rank: resultPosition }
+                : data
+            )
+          );
+
+          // Store the rank data for each keyword
+          updatedSearchPositionData.push({
+            keyword,
+            domain: url,
+            position: resultPosition,
+          });
+        } else {
+          console.error("Error updating keyword rank:", result.message);
+        }
+      }
+
+      // Update search position data state with all the results
+      setSearchPositionData(updatedSearchPositionData);
+
+      // Make the position result table visible
+      setIsSearchPositionVisible(true);
+    } catch (error) {
+      console.error("Error fetching position:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <ProjectLayout>
       <div className="mb-5">
@@ -175,6 +354,14 @@ export default function SingleProjectPage() {
               <FaPlus className="mr-2" /> Add New Keyword
             </Button>
           </div>
+          {/* Add Check Rank Auto Button */}
+          <Button
+            className="flex items-center gap-2 bg-green-600 text-white"
+            onClick={handleAutoRankCheck}
+          >
+            <BsCloudCheck />
+            Check Rank Auto
+          </Button>
         </div>
 
         <div className="mt-10">
@@ -183,7 +370,8 @@ export default function SingleProjectPage() {
               <tr>
                 <th className="px-4 py-2 border">Keyword</th>
                 <th className="px-4 py-2 border">Search Engine</th>
-                <th className="px-4 py-2 border">Rank</th>
+                <th className="px-4 py-2 border">Rank (Auto Check)</th>
+                <th className="px-4 py-2 border">Rank (Manual Check)</th>
                 <th className="px-4 py-2 border">Actions</th>
               </tr>
             </thead>
@@ -197,38 +385,41 @@ export default function SingleProjectPage() {
                       {data.latest_auto_search_rank}
                     </td>
                     <td className="px-4 py-2 border">
-                      <div className="flex justify-center items-center gap-6">
-                        <FaSync
-                          className="text-blue-400 cursor-pointer text-xl"
-                          onClick={() => handleRefresh(index)}
-                          title="Check Ranking Now"
-                        />
-                        <FaHistory
-                          className="text-yellow-400 cursor-pointer text-xl"
-                          onClick={() => handleHistory(index)}
-                          title="View Ranking History"
-                        />
-                        <TfiTrash
-                          className="cursor-pointer text-xl text-red-400"
-                          onClick={() => handleDelete(index)}
-                          title="Delete"
-                        />
-                        <Switch
-                          checked={toggleState[index]}
-                          onCheckedChange={() => handleToggle(index)}
-                          className="w-[40px] h-[20px] bg-gray-300 rounded-full"
-                        />
-                      </div>
+                      {data.latest_manual_check_rank || "Not Checked"}
+                    </td>
+                    <td className="px-4 py-2 border flex justify-center gap-2">
+                      <Button
+                        className="text-white"
+                        onClick={() => handleSearchPosition(index)}
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <FaSync className="animate-spin" />
+                        ) : (
+                          "Check"
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="text-blue-600"
+                        onClick={() => handleHistory(index)}
+                      >
+                        <FaHistory />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        className="text-white"
+                        onClick={() => handleDelete(index)}
+                      >
+                        <TfiTrash />
+                      </Button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan="4"
-                    className="px-4 py-8 text-center text-gray-500"
-                  >
-                    No keywords to display
+                  <td colSpan="5" className="text-center py-2">
+                    No keywords found
                   </td>
                 </tr>
               )}
@@ -279,6 +470,58 @@ export default function SingleProjectPage() {
           </Button>
         </div>
       </div>
+
+      {/* <p class="text-lg font-medium text-gray-700">
+        Position:
+        <span class="font-bold text-blue-600">
+          {position === "Not Found"
+            ? "Not in top 100"
+            : `Ranked at ${position}`}
+        </span>
+      </p> */}
+      {isSearchPositionVisible && (
+        <div className="mt-10 overflow-x-auto">
+          <table className="min-w-full table-auto bg-white shadow-lg rounded-lg border border-gray-200">
+            <thead className="bg-blue-600 text-white text-sm uppercase">
+              <tr>
+                <th className="px-6 py-4 text-left font-semibold">Keyword</th>
+                <th className="px-6 py-4 text-left font-semibold">
+                  Domain/URL
+                </th>
+                <th className="px-6 py-4 text-left font-semibold">Rank</th>
+              </tr>
+            </thead>
+            <tbody>
+              {searchPositionData.length > 0 ? (
+                searchPositionData.map((data, index) => (
+                  <tr
+                    key={index}
+                    className="odd:bg-gray-50 even:bg-gray-100 hover:bg-gray-200 transition-all duration-300"
+                  >
+                    <td className="px-6 py-4 text-gray-800">{data.keyword}</td>
+                    <td className="px-6 py-4 text-gray-600">{data.domain}</td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {data.position === "Not Found" ? (
+                        <span className="text-red-600">Not in top 100</span>
+                      ) : (
+                        <span className="text-green-600">
+                          Ranked at {data.position}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="3" className="text-center py-4 text-gray-500">
+                    No position data available
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </ProjectLayout>
   );
 }
