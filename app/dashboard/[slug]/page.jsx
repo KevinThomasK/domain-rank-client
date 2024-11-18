@@ -400,7 +400,7 @@ export default function SingleProjectPage() {
             <p className="text-gray-700 mb-6">
               Are you sure you want to delete the keyword{" "}
               <span className="font-bold text-red-600">
-                "{selectedKeywordName}"
+                {selectedKeywordName}
               </span>
               ?
             </p>
