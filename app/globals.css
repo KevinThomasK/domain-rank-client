@@ -13,7 +13,7 @@ body {
 
 /* Increase font size for headings */
 h1, h2, h3, h4, h5, h6 {
-  font-size: 1.5rem; /* Adjust to make headings bigger */
+  font-size: 1.2rem; /* Adjust to make headings bigger */
   margin-bottom: 0.5rem; /* Optional: space between headings and next elements */
 }
 

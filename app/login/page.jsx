@@ -11,7 +11,7 @@ const Login = () => {
     password: "",
   });
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -22,20 +22,20 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); 
-    setIsLoading(true); 
+    setError("");
+    setIsLoading(true);
 
     try {
       const res = await signIn("credentials", {
-        email: formData.email, 
-        password: formData.password, 
+        email: formData.email,
+        password: formData.password,
         redirect: false,
       });
 
       if (res.error) {
         setError("Invalid credentials");
         console.log("signin error", res.error);
-        setIsLoading(false); 
+        setIsLoading(false);
         return;
       }
 
@@ -43,11 +43,11 @@ const Login = () => {
         theme: "colored",
       });
 
-      router.replace("/projects"); 
+      router.replace("/dashboard");
     } catch (error) {
       console.log(error);
       setError("An unexpected error occurred. Please try again later.");
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   };
 
@@ -96,7 +96,7 @@ const Login = () => {
           <button
             type="submit"
             className="w-full py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition-colors"
-            disabled={isLoading} 
+            disabled={isLoading}
           >
             {isLoading ? "Logging in..." : "Login"} {/* Show loading text */}
           </button>

@@ -8,7 +8,6 @@ export const authOptions = {
       credentials: {},
       async authorize(credentials) {
         const { email, password } = credentials;
-        console.log(credentials, "cred");
 
         try {
           const response = await fetch(
