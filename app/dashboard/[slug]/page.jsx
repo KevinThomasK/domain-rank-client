@@ -42,6 +42,7 @@ export default function SingleProjectPage() {
   const [selectedWebsite, setSelectedWebsite] = useState("");
   const [selectedWebsiteId, setSelectedWebsiteId] = useState("");
 
+  //update website state while select website
   const handleWebsiteChange = (value) => {
     const parsedValue = JSON.parse(value);
     setSelectedWebsite(parsedValue.website);
@@ -472,6 +473,7 @@ export default function SingleProjectPage() {
 
   return (
     <>
+      {/* delete confirm modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-[600px]">
@@ -503,7 +505,7 @@ export default function SingleProjectPage() {
           </div>
         </div>
       )}
-
+      {/* heading and keywords table */}
       <div className="mb-5">
         {projectLoading ? (
           <div className="flex items-center space-x-4">
@@ -711,7 +713,7 @@ export default function SingleProjectPage() {
           )}
         </div>
       </div>
-
+      {/* sidebar */}
       <div
         className={`fixed top-0 right-0 bottom-0 w-[700px] bg-white shadow-lg p-5 flex flex-col gap-4 z-50 transform transition-all duration-300 ${
           isSidebarOpen
@@ -762,7 +764,7 @@ export default function SingleProjectPage() {
           </Button>
         </div>
       </div>
-
+      {/* search result table */}
       {isSearchPositionVisible && (
         <div className="mt-10 overflow-x-auto">
           <table className="min-w-full table-auto bg-white shadow-lg rounded-lg border border-gray-200">

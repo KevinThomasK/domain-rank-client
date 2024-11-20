@@ -87,16 +87,23 @@ export default function DashboardPage({ children }) {
     setNewProjectDescription("");
   };
 
-  const saveNewProject = async () => {
+  const saveNewProject = async (e) => {
+    e.preventDefault();
+
+    if (!newProjectName) {
+      toast.error("Project Name is required");
+      return;
+    }
+
     if (!session?.user?.token) {
-      alert("You are not logged in.");
+      toast.error("You are not logged in.");
       return;
     }
 
     const newProject = {
-      name: newProjectName,
-      domain_name: newProjectUrl,
-      description: newProjectDescription,
+      name: newProjectName.trim(),
+      domain_name: newProjectUrl.trim() || null,
+      description: newProjectDescription.trim() || null,
     };
 
     try {
@@ -112,9 +119,8 @@ export default function DashboardPage({ children }) {
         }
       );
 
-      const result = await response.json();
-
       if (response.ok) {
+        const result = await response.json();
         setProjects([result.project, ...projects]);
         setIsSidebarOpen(false);
         setNewProjectName("");
@@ -122,16 +128,19 @@ export default function DashboardPage({ children }) {
         setNewProjectDescription("");
         toast.success("Project added successfully");
       } else {
-        toast.error("something went wrong");
+        const errorData = await response.json();
+        toast.error(errorData.message || "Something went wrong");
       }
     } catch (error) {
       console.error("Error creating project:", error);
-      alert("There was an error creating the project.");
+      toast.error("There was an error creating the project.");
     }
   };
 
-  const dropdownFilteredProjects = projects.filter((project) =>
-    project.name.toLowerCase().includes(dropdownSearch.toLowerCase())
+  const dropdownFilteredProjects = projects.filter(
+    (project) =>
+      project.name &&
+      project.name.toLowerCase().includes(dropdownSearch.toLowerCase())
   );
 
   // Load selectedProject from local storage on mount
@@ -200,10 +209,10 @@ export default function DashboardPage({ children }) {
               {dropdownFilteredProjects.map((project, index) => (
                 <SelectItem
                   key={index}
-                  value={project.name}
+                  value={project.name || `placeholder-${index}`} // Fallback value
                   className="cursor-pointer"
                 >
-                  {project.name}
+                  {project.name || "Unnamed Project"}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -262,6 +271,7 @@ export default function DashboardPage({ children }) {
               value={newProjectName}
               onChange={(e) => setNewProjectName(e.target.value)}
               className="mb-2 mt-2 w-full h-[50px] text-lg"
+              required
             />
           </div>
 
