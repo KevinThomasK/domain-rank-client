@@ -24,6 +24,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CgWebsite } from "react-icons/cg";
+import { TbWorldSearch } from "react-icons/tb";
 
 export default function DashboardPage({ children }) {
   const pathname = usePathname();
@@ -132,6 +134,21 @@ export default function DashboardPage({ children }) {
     project.name.toLowerCase().includes(dropdownSearch.toLowerCase())
   );
 
+  // Load selectedProject from local storage on mount
+  useEffect(() => {
+    const storedProject = localStorage.getItem("selectedProject");
+    if (storedProject) {
+      setSelectedProject(JSON.parse(storedProject)); // Parse stored string back to object
+    }
+  }, []);
+
+  // Save selectedProject to local storage whenever it changes
+  useEffect(() => {
+    if (selectedProject) {
+      localStorage.setItem("selectedProject", JSON.stringify(selectedProject));
+    }
+  }, [selectedProject]);
+
   if (status === "loading") {
     return <div>Loading...</div>;
   }
@@ -145,8 +162,8 @@ export default function DashboardPage({ children }) {
       <header className="flex justify-between items-center pb-6 pt-6 pr-10 pl-10 bg-gray-100">
         {/* Left: SEO AUDITOR Heading */}
         <Link
-          href={"/dashboard"}
-          className="text-3xl font-bold flex-1 text-gray-700 "
+          href="/dashboard"
+          className="text-3xl font-bold flex-1 text-gray-700"
         >
           SEO-AUDITOR
         </Link>
@@ -163,7 +180,7 @@ export default function DashboardPage({ children }) {
                 router.push(`/dashboard/${selected.id}`); // Redirect to the selected project's page
               }
             }}
-            value={selectedProject?.name || ""} // Ensure no error when selectedProject is null
+            value={selectedProject?.name || ""}
           >
             <SelectTrigger className="w-[500px] h-12 text-lg bg-white">
               <SelectValue placeholder="Select a project">
@@ -191,7 +208,10 @@ export default function DashboardPage({ children }) {
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={addNewProject} className="ml-2 h-10">
+          <Button
+            onClick={() => setIsSidebarOpen(true)} // Open Sidebar
+            className="ml-2 h-10"
+          >
             <FaPlus className="mr-1" /> Add New Project
           </Button>
         </div>
@@ -275,15 +295,37 @@ export default function DashboardPage({ children }) {
           </div>
         </div>
       </header>
+
       <hr />
       {/* Main Content Layout */}
       <div className="flex">
         {/* Sidebar */}
         <aside className="w-64 bg-gray-100 border border-r-1 h-screen flex flex-col p-10">
           <nav className="space-y-4">
-            <button className="flex items-center gap-3 text-lg text-gray-700 hover:text-black">
-              <FaSearch className="text-xl" /> Keywords
-            </button>
+            {selectedProject ? (
+              <Link
+                className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+                href={`/dashboard/website/${selectedProject.id}`}
+              >
+                <CgWebsite className="text-xl" /> Websites
+              </Link>
+            ) : (
+              <span className="flex items-center gap-3 text-lg text-gray-400 cursor-not-allowed">
+                <CgWebsite className="text-xl" /> Websites
+              </span>
+            )}
+            {selectedProject ? (
+              <Link
+                className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+                href={`/dashboard/${selectedProject.id}`}
+              >
+                <TbWorldSearch className="text-xl" /> Keywords
+              </Link>
+            ) : (
+              <span className="flex items-center gap-3 text-lg text-gray-400 cursor-not-allowed">
+                <TbWorldSearch className="text-xl" /> Keywords
+              </span>
+            )}
             <button className="flex items-center gap-3 text-lg text-gray-700 hover:text-black">
               <FaChartBar className="text-xl" /> Site Audit
             </button>
@@ -291,9 +333,7 @@ export default function DashboardPage({ children }) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-10">
-          <h1>{children}</h1>
-        </main>
+        <main className="flex-1 p-10">{children}</main>
       </div>
     </>
   );

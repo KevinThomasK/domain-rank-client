@@ -1,13 +1,10 @@
 "use client";
-
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import ProjectLayout from "@/components/ProjectLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FaPlus, FaSync, FaHistory } from "react-icons/fa";
 import { TfiTrash } from "react-icons/tfi";
-import { useEffect, useState } from "react";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectTrigger,
@@ -22,12 +19,14 @@ import { toast } from "react-toastify";
 
 export default function SingleProjectPage() {
   const { data: session, status } = useSession();
-  const { slug } = useParams(); // Get the project slug from the URL
+  const { slug } = useParams();
   const router = useRouter();
   const [keywordsData, setKeywordsData] = useState([]);
+  const [websitesData, setWebsitesData] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [newKeyword, setNewKeyword] = useState("");
   const [project, setProject] = useState("");
+  const [ranks, setRanks] = useState("");
   const [selectedSearchEngine, setSelectedSearchEngine] = useState("Google");
   const [position, setPosition] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -35,10 +34,48 @@ export default function SingleProjectPage() {
   const [isSearchPositionVisible, setIsSearchPositionVisible] = useState(false);
   const [projectLoading, setProjectLoading] = useState(false);
   const [keywordsLoading, setKeywordsLoading] = useState(false);
+  const [websitesLoading, setWebsitesLoading] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedKeywordIndex, setSelectedKeywordIndex] = useState(null);
   const [selectedKeywordName, setSelectedKeywordName] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [selectedWebsite, setSelectedWebsite] = useState("");
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState("");
+
+  const handleWebsiteChange = (value) => {
+    const parsedValue = JSON.parse(value);
+    setSelectedWebsite(parsedValue.website);
+    setSelectedWebsiteId(parsedValue.id);
+  };
+
+  //fetch ranks from join ranks and keywords api
+  useEffect(() => {
+    const fetchRanks = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/ranks/project/${slug}/website/${selectedWebsiteId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${session?.user.token}`,
+            },
+          }
+        );
+        const result = await response.json();
+        if (response.ok) {
+          setRanks(result);
+        } else {
+          console.error("Error fetching project:", result.message);
+        }
+      } catch (error) {
+        console.error("Failed to fetch project:", error);
+      }
+    };
+
+    if (slug) {
+      fetchRanks(); // Fetch project details when slug is available
+    }
+  }, [slug, selectedWebsiteId, keywordsData, session?.user.token]);
 
   // Fetch project details
   useEffect(() => {
@@ -73,6 +110,40 @@ export default function SingleProjectPage() {
     }
   }, [slug, session?.user.token]);
 
+  //fetch websites
+  useEffect(() => {
+    const fetchWebsites = async () => {
+      try {
+        setWebsitesLoading(true);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/websites/${slug}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${session?.user.token}`,
+            },
+          }
+        );
+
+        const result = await response.json();
+        if (response.ok) {
+          setWebsitesLoading(false);
+          setWebsitesData(result.websites);
+        } else {
+          setWebsitesLoading(false);
+          console.error("Error fetching websites:", result.message);
+        }
+      } catch (error) {
+        setWebsitesLoading(false);
+        console.error("Failed to fetch websites:", error);
+      }
+    };
+
+    if (slug) {
+      fetchWebsites();
+    }
+  }, [slug, session?.user.token]);
+
   // Fetch keywords
   useEffect(() => {
     const fetchKeywords = async () => {
@@ -92,8 +163,9 @@ export default function SingleProjectPage() {
         if (response.ok) {
           setKeywordsLoading(false);
           setKeywordsData(result.keywords);
-          console.log("Fetched keywords:", result.keywords);
+          //console.log("Fetched keywords:", result.keywords);
         } else {
+          setKeywordsData([]);
           setKeywordsLoading(false);
           console.error("Error fetching keywords:", result.message);
         }
@@ -118,6 +190,7 @@ export default function SingleProjectPage() {
     setIsDeleteModalOpen(true);
   };
 
+  //rank check function
   const fetchKeywordPosition = async (url, keyword) => {
     const maxResultsToCheck = 100;
     const resultsPerPage = 10;
@@ -131,7 +204,7 @@ export default function SingleProjectPage() {
 
         if (data.items) {
           const positionInPage = data.items.findIndex((item) =>
-            item.link.startsWith(url)
+            item.link.includes(url)
           );
 
           if (positionInPage !== -1) {
@@ -149,14 +222,19 @@ export default function SingleProjectPage() {
     return "Not Found";
   };
 
+  //rank check manual(single keyword)
   const handleSearchPosition = async (index) => {
     setLoading(true);
     setPosition(null);
-    const url = project.domain_name;
+    const url = selectedWebsite;
     const keyword = keywordsData[index].keyword;
 
     try {
       const resultPosition = await fetchKeywordPosition(url, keyword);
+      if (isNaN(resultPosition)) {
+        toast.info("Not found in the top 100 results");
+        return;
+      }
       setPosition(resultPosition);
 
       const keywordId = keywordsData[index].id;
@@ -170,6 +248,7 @@ export default function SingleProjectPage() {
             Authorization: `Bearer ${session?.user.token}`,
           },
           body: JSON.stringify({
+            website_id: selectedWebsiteId,
             latest_manual_check_rank: resultPosition,
           }),
         }
@@ -197,6 +276,7 @@ export default function SingleProjectPage() {
         console.error("Error updating keyword rank:", result.message);
       }
     } catch (error) {
+      toast.error("something went wrong, please try again later");
       console.error("Error fetching position:", error);
     } finally {
       setLoading(false);
@@ -211,12 +291,10 @@ export default function SingleProjectPage() {
   //add a keyword
   const handleAddKeyword = async () => {
     const newKeywordData = {
-      project_id: slug, // Use the slug as the project_id
+      project_id: slug,
       keyword: newKeyword,
       search_engine: selectedSearchEngine,
       search_location: "Default Location",
-      latest_auto_search_rank: 0,
-      latest_manual_check_rank: 0,
       status: "Active",
     };
     setIsSubmitted(true);
@@ -239,7 +317,7 @@ export default function SingleProjectPage() {
       );
 
       const result = await response.json();
-      console.log(result, "result");
+      //console.log(result, "result");
       if (response.ok) {
         setKeywordsData((prev) => [
           ...prev,
@@ -247,7 +325,6 @@ export default function SingleProjectPage() {
             id: result.keyword.id,
             keyword: result.keyword.keyword,
             search_engine: newKeywordData.search_engine,
-            latest_auto_search_rank: newKeywordData.latest_auto_search_rank,
             status: result.keyword.status,
           },
         ]);
@@ -264,7 +341,7 @@ export default function SingleProjectPage() {
     }
   };
 
-  //check rank of all keywords
+  //check rank of all keywords(auto)
   const handleAutoRankCheck = async () => {
     setLoading(true);
     const updatedSearchPositionData = [];
@@ -272,8 +349,8 @@ export default function SingleProjectPage() {
     try {
       for (const keywordData of keywordsData) {
         const keyword = keywordData.keyword;
-        const url = project.domain_name;
-        console.log(keyword, "key word name");
+        const url = selectedWebsite;
+
         // Fetch the position for each keyword
         const resultPosition = await fetchKeywordPosition(url, keyword);
 
@@ -289,6 +366,7 @@ export default function SingleProjectPage() {
               Authorization: `Bearer ${session?.user.token}`,
             },
             body: JSON.stringify({
+              website_id: selectedWebsiteId,
               latest_auto_search_rank: resultPosition,
             }),
           }
@@ -311,6 +389,7 @@ export default function SingleProjectPage() {
             position: resultPosition,
           });
         } else {
+          toast.error("something went wrong, please try again later");
           console.error("Error updating keyword rank:", result.message);
         }
       }
@@ -384,7 +463,7 @@ export default function SingleProjectPage() {
         )
       );
 
-      console.log(`Keyword status updated to ${newStatus}`);
+      //console.log(`Keyword status updated to ${newStatus}`);
     } catch (error) {
       console.error("Error updating status:", error.message);
       alert("Failed to update status. Please try again.");
@@ -437,7 +516,24 @@ export default function SingleProjectPage() {
         ) : (
           <>
             <h1 className="text-3xl font-bold">{project.name}</h1>
-            <p className="mt-2 text-xl text-blue-800">{project.domain_name}</p>
+            <Select onValueChange={handleWebsiteChange}>
+              <SelectTrigger className="w-[400px] h-11 border rounded-md px-4 py-2 text-lg">
+                <SelectValue placeholder="Select a website" />
+              </SelectTrigger>
+              <SelectContent className="text-lg">
+                {websitesData.map((data) => (
+                  <SelectItem
+                    key={data.id}
+                    value={JSON.stringify({
+                      website: data.website,
+                      id: data.id,
+                    })}
+                  >
+                    {data.website}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </>
         )}
 
@@ -483,7 +579,7 @@ export default function SingleProjectPage() {
             <table className="min-w-full table-auto border-collapse">
               <thead>
                 <tr>
-                  <th className="px-4 py-2 border">Keyword</th>
+                  <th className="px-4 py-2 border w-1/3">Keyword</th>
                   <th className="px-4 py-2 border">Search Engine</th>
                   <th className="px-4 py-2 border">Rank (Auto Check)</th>
                   <th className="px-4 py-2 border">Rank (Manual Check)</th>
@@ -492,22 +588,32 @@ export default function SingleProjectPage() {
                 </tr>
               </thead>
               <tbody>
-                {keywordsData.length > 0 ? (
-                  keywordsData.map((data, index) => (
+                {ranks?.data?.length > 0 ? (
+                  ranks.data.map((data, index) => (
                     <tr key={index} className="odd:bg-gray-100 text-center">
-                      <td className="px-4 py-2 border">{data.keyword}</td>
-                      <td className="px-4 py-2 border">{data.search_engine}</td>
                       <td className="px-4 py-2 border">
-                        {data.latest_auto_search_rank}
+                        {data.keyword || "N/A"}
                       </td>
                       <td className="px-4 py-2 border">
-                        {data.latest_manual_check_rank || "Not Checked"}
+                        {data.search_engine || "N/A"}
+                      </td>
+                      <td className="px-4 py-2 border">
+                        {data.latest_auto_search_rank !== null
+                          ? data.latest_auto_search_rank
+                          : "N/A"}
+                      </td>
+                      <td className="px-4 py-2 border">
+                        {data.latest_manual_check_rank !== null
+                          ? data.latest_manual_check_rank
+                          : "N/A"}
                       </td>
                       <td className="px-4 py-2 border flex justify-center gap-2">
                         <Button
                           className="text-white"
                           onClick={() => handleSearchPosition(index)}
-                          disabled={loading || data.status === "Inactive"}
+                          disabled={
+                            loading || data.keyword_status === "Inactive"
+                          }
                         >
                           {loading ? (
                             <FaSync className="animate-spin" />
@@ -531,7 +637,56 @@ export default function SingleProjectPage() {
                         </Button>
                       </td>
                       <td className="px-2 py-2 border">
-                        <button
+                        <Button
+                          onClick={() => toggleStatus(index)}
+                          className={`py-2 px-3 text-sm rounded-md text-white ${
+                            data.keyword_status === "Active"
+                              ? "bg-green-600"
+                              : "bg-gray-500"
+                          }`}
+                        >
+                          {data.keyword_status}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                ) : keywordsData.length > 0 ? (
+                  keywordsData.map((data, index) => (
+                    <tr key={index} className="odd:bg-gray-100 text-center">
+                      <td className="px-4 py-2 border">{data.keyword}</td>
+                      <td className="px-4 py-2 border">{data.search_engine}</td>
+                      <td className="px-4 py-2 border">{"N/A"}</td>
+                      <td className="px-4 py-2 border">{"N/A"}</td>
+                      <td className="px-4 py-2 border flex justify-center gap-2">
+                        <Button
+                          className="text-white"
+                          disabled={true}
+                          onClick={() => handleSearchPosition(index)}
+                        >
+                          {loading ? (
+                            <FaSync className="animate-spin" />
+                          ) : (
+                            "Check"
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="text-blue-600"
+                          onClick={() => handleHistory(index)}
+                          disabled={true}
+                        >
+                          <FaHistory />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          className="text-white"
+                          onClick={() => handleDelete(index)}
+                        >
+                          <TfiTrash />
+                        </Button>
+                      </td>
+                      <td className="px-2 py-2 border">
+                        <Button
                           onClick={() => toggleStatus(index)}
                           className={`py-2 px-3 text-sm rounded-md text-white ${
                             data.status === "Active"
@@ -540,13 +695,13 @@ export default function SingleProjectPage() {
                           }`}
                         >
                           {data.status}
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="text-center py-2">
+                    <td colSpan="6" className="text-center py-2">
                       No keywords found
                     </td>
                   </tr>
