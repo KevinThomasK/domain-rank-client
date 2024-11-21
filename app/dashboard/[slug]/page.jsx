@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FaPlus, FaSync, FaHistory } from "react-icons/fa";
@@ -23,7 +23,6 @@ import { CiViewList } from "react-icons/ci";
 export default function SingleProjectPage() {
   const { data: session, status } = useSession();
   const { slug } = useParams();
-  const router = useRouter();
   const [keywordsData, setKeywordsData] = useState([]);
   const [websitesData, setWebsitesData] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -322,37 +321,6 @@ export default function SingleProjectPage() {
   };
 
   //get rank history
-  // const handleHistory = async (index) => {
-  //   const keywordId = keywordsData[index].id;
-
-  //   if (!keywordId || !selectedWebsiteId) {
-  //     toast.info("Website not selected");
-  //     return;
-  //   }
-  //   try {
-  //     const response = await fetch(
-  //       `${process.env.NEXT_PUBLIC_BACKEND_URL}/rankhistory/${keywordId}/${selectedWebsiteId}`,
-  //       {
-  //         method: "GET",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${session?.user.token}`,
-  //         },
-  //       }
-  //     );
-
-  //     const result = await response.json();
-  //     if (response.ok) {
-  //       setHistory(result);
-  //       console.log("rank history:", history);
-  //     } else {
-  //       console.error("Error fetching rankhistory:", result.message);
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-
   const handleHistory = async (index) => {
     const keywordId = keywordsData[index].id;
     setSelectedKeyword(keywordsData[index].keyword);
@@ -375,8 +343,8 @@ export default function SingleProjectPage() {
       const result = await response.json();
       if (response.ok) {
         setHistory(result);
-        setSidebarMode("showHistory"); // Switch to history mode
-        setIsSidebarOpen(true); // Open the sidebar
+        setSidebarMode("showHistory");
+        setIsSidebarOpen(true);
       } else {
         toast.error("something went wrong");
         console.error("Error fetching rankhistory:", result.message);
@@ -442,13 +410,18 @@ export default function SingleProjectPage() {
     }
   };
 
+  console.log(keywordsData, "kwd");
+
   //check rank of all keywords(auto)
   const handleAutoRankCheck = async () => {
     setLoading(true);
     const updatedSearchPositionData = [];
 
     try {
-      for (const keywordData of keywordsData) {
+      const activeKeywords = keywordsData.filter(
+        (keywordData) => keywordData.status === "Active"
+      );
+      for (const keywordData of activeKeywords) {
         const keyword = keywordData.keyword;
         const url = selectedWebsite;
 
@@ -655,7 +628,10 @@ export default function SingleProjectPage() {
               />
               <Button
                 className="flex items-center gap-2"
-                onClick={() => setIsSidebarOpen(true)}
+                onClick={() => {
+                  setIsSidebarOpen(true);
+                  setSidebarMode("addKeyword");
+                }}
               >
                 <FaPlus className="mr-2" /> Add New Keyword
               </Button>
@@ -724,10 +700,13 @@ export default function SingleProjectPage() {
                         {data.search_engine || "N/A"}
                       </td>
                       <td className="px-4 py-2 border">
-                        {data.latest_auto_search_rank !== null
+                        {data.latest_auto_search_rank === -1
+                          ? "Not Found"
+                          : data.latest_auto_search_rank !== null
                           ? data.latest_auto_search_rank
                           : "N/A"}
                       </td>
+
                       <td className="px-4 py-2 border">
                         {data.latest_manual_check_rank !== null
                           ? data.latest_manual_check_rank
@@ -909,10 +888,10 @@ export default function SingleProjectPage() {
                   <thead>
                     <tr className="bg-gray-100 text-left">
                       <th className="px-4 py-2 text-gray-700 border border-gray-200">
-                        Rank
+                        Date
                       </th>
                       <th className="px-4 py-2 text-gray-700 border border-gray-200">
-                        Date
+                        Rank
                       </th>
                     </tr>
                   </thead>
@@ -925,9 +904,6 @@ export default function SingleProjectPage() {
                         } hover:bg-gray-100`}
                       >
                         <td className="px-4 py-2 text-gray-700 border border-gray-200">
-                          {item.rank}
-                        </td>
-                        <td className="px-4 py-2 text-gray-700 border border-gray-200">
                           {new Date(item.checked_date).toLocaleDateString(
                             "en-GB",
                             {
@@ -936,6 +912,9 @@ export default function SingleProjectPage() {
                               year: "numeric",
                             }
                           )}
+                        </td>
+                        <td className="px-4 py-2 text-gray-700 border border-gray-200">
+                          {item.rank}
                         </td>
                       </tr>
                     ))}
@@ -947,7 +926,9 @@ export default function SingleProjectPage() {
             )}
 
             <Button
-              onClick={() => setIsSidebarOpen(false)}
+              onClick={() => {
+                setIsSidebarOpen(false);
+              }}
               variant="outline"
               className="mt-4"
             >
