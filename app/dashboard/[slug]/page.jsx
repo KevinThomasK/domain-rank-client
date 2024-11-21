@@ -16,6 +16,9 @@ import { useSession } from "next-auth/react";
 import { BsCloudCheck } from "react-icons/bs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-toastify";
+import KeywordTable from "@/components/KeywordTable";
+import TableModal from "@/components/TableModal";
+import { CiViewList } from "react-icons/ci";
 
 export default function SingleProjectPage() {
   const { data: session, status } = useSession();
@@ -27,6 +30,7 @@ export default function SingleProjectPage() {
   const [newKeyword, setNewKeyword] = useState("");
   const [project, setProject] = useState("");
   const [ranks, setRanks] = useState("");
+  const [data, setData] = useState("");
   const [selectedSearchEngine, setSelectedSearchEngine] = useState("Google");
   const [position, setPosition] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -41,6 +45,10 @@ export default function SingleProjectPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [selectedWebsite, setSelectedWebsite] = useState("");
   const [selectedWebsiteId, setSelectedWebsiteId] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [sidebarMode, setSidebarMode] = useState("addKeyword");
+  const [selectedKeyword, setSelectedKeyword] = useState("");
 
   //update website state while select website
   const handleWebsiteChange = (value) => {
@@ -77,6 +85,35 @@ export default function SingleProjectPage() {
       fetchRanks(); // Fetch project details when slug is available
     }
   }, [slug, selectedWebsiteId, keywordsData, session?.user.token]);
+
+  //fetch all keywords for a specific project along with their corresponding rank for each website
+  useEffect(() => {
+    const fetchTable = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/project/${slug}/keywords`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${session?.user.token}`,
+            },
+          }
+        );
+        const result = await response.json();
+        if (response.ok) {
+          setData(result);
+        } else {
+          console.error("Error fetching table:", result.message);
+        }
+      } catch (error) {
+        console.error("Failed to fetch table:", error);
+      }
+    };
+
+    if (slug) {
+      fetchTable();
+    }
+  }, [slug, session?.user.token]);
 
   // Fetch project details
   useEffect(() => {
@@ -284,9 +321,70 @@ export default function SingleProjectPage() {
     }
   };
 
-  const handleHistory = (index) => {
-    const keyword = keywordsData[index].keyword;
-    router.push(`/projects/${slug}/keywords/${keyword}`);
+  //get rank history
+  // const handleHistory = async (index) => {
+  //   const keywordId = keywordsData[index].id;
+
+  //   if (!keywordId || !selectedWebsiteId) {
+  //     toast.info("Website not selected");
+  //     return;
+  //   }
+  //   try {
+  //     const response = await fetch(
+  //       `${process.env.NEXT_PUBLIC_BACKEND_URL}/rankhistory/${keywordId}/${selectedWebsiteId}`,
+  //       {
+  //         method: "GET",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${session?.user.token}`,
+  //         },
+  //       }
+  //     );
+
+  //     const result = await response.json();
+  //     if (response.ok) {
+  //       setHistory(result);
+  //       console.log("rank history:", history);
+  //     } else {
+  //       console.error("Error fetching rankhistory:", result.message);
+  //     }
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
+
+  const handleHistory = async (index) => {
+    const keywordId = keywordsData[index].id;
+    setSelectedKeyword(keywordsData[index].keyword);
+    if (!keywordId || !selectedWebsiteId) {
+      toast.info("Website not selected");
+      return;
+    }
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/rankhistory/${keywordId}/${selectedWebsiteId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.user.token}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+      if (response.ok) {
+        setHistory(result);
+        setSidebarMode("showHistory"); // Switch to history mode
+        setIsSidebarOpen(true); // Open the sidebar
+      } else {
+        toast.error("something went wrong");
+        console.error("Error fetching rankhistory:", result.message);
+      }
+    } catch (error) {
+      toast.error("something went wrong");
+      console.log(error);
+    }
   };
 
   //add a keyword
@@ -335,9 +433,11 @@ export default function SingleProjectPage() {
         setIsSubmitted(false);
         toast.success("Keyword added");
       } else {
+        toast.error("something went wrong");
         console.error("Error creating keyword:", result.error);
       }
     } catch (error) {
+      toast.error("something went wrong");
       console.error("Failed to add keyword:", error);
     }
   };
@@ -356,6 +456,10 @@ export default function SingleProjectPage() {
         const resultPosition = await fetchKeywordPosition(url, keyword);
 
         // Update the keyword's latest_auto_search_rank
+        if (!url) {
+          toast.info("Website not selected");
+          return;
+        }
         const keywordId = keywordData.id;
 
         const response = await fetch(
@@ -556,6 +660,26 @@ export default function SingleProjectPage() {
                 <FaPlus className="mr-2" /> Add New Keyword
               </Button>
             </div>
+            {/* view table button */}
+            <div className="p-4">
+              <Button
+                className="bg-blue-700"
+                onClick={() => setIsModalOpen(true)}
+              >
+                <CiViewList />
+                Summary
+              </Button>
+
+              <TableModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+              >
+                <h2 className="text-xl font-semibold mb-4">
+                  Summary (Keyword Rank Table)
+                </h2>
+                <KeywordTable data={data} />
+              </TableModal>
+            </div>
             {/* Add Check Rank Auto Button */}
             <Button
               className="flex items-center gap-2 bg-green-600 text-white"
@@ -581,7 +705,7 @@ export default function SingleProjectPage() {
             <table className="min-w-full table-auto border-collapse">
               <thead>
                 <tr>
-                  <th className="px-4 py-2 border w-1/3">Keyword</th>
+                  <th className="px-4 py-2 border w-1/3 text-left">Keyword</th>
                   <th className="px-4 py-2 border">Search Engine</th>
                   <th className="px-4 py-2 border">Rank (Auto Check)</th>
                   <th className="px-4 py-2 border">Rank (Manual Check)</th>
@@ -593,7 +717,7 @@ export default function SingleProjectPage() {
                 {ranks?.data?.length > 0 ? (
                   ranks.data.map((data, index) => (
                     <tr key={index} className="odd:bg-gray-100 text-center">
-                      <td className="px-4 py-2 border">
+                      <td className="px-4 py-2 border text-left">
                         {data.keyword || "N/A"}
                       </td>
                       <td className="px-4 py-2 border">
@@ -713,7 +837,7 @@ export default function SingleProjectPage() {
           )}
         </div>
       </div>
-      {/* sidebar */}
+      {/* sidebar modal*/}
       <div
         className={`fixed top-0 right-0 bottom-0 w-[700px] bg-white shadow-lg p-5 flex flex-col gap-4 z-50 transform transition-all duration-300 ${
           isSidebarOpen
@@ -721,49 +845,118 @@ export default function SingleProjectPage() {
             : "translate-x-full opacity-0"
         }`}
       >
-        <h2 className="mb-6 font-bold">Add New Keyword</h2>
-        <div>
-          <label className="block">Keyword</label>
-          <Input
-            type="text"
-            placeholder="Enter keyword"
-            value={newKeyword}
-            onChange={(e) => setNewKeyword(e.target.value)}
-            className={`mb-2 mt-2 h-[50px] text-lg ${
-              !newKeyword && isSubmitted ? "border-red-500" : ""
-            }`}
-          />
-          {!newKeyword && isSubmitted && (
-            <p className="text-red-500 text-sm">Keyword is required.</p>
-          )}
-        </div>
-        <div>
-          <label className="block">Search Engine</label>
-          <Select
-            onValueChange={(value) => setSelectedSearchEngine(value)}
-            value={selectedSearchEngine}
-          >
-            <SelectTrigger className="w-[400px]">
-              <SelectValue>{selectedSearchEngine}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Google">Google</SelectItem>
-              <SelectItem value="Bing">Bing</SelectItem>
-              <SelectItem value="Yahoo">Yahoo</SelectItem>
-            </SelectContent>
-          </Select>
-          {!selectedSearchEngine && isSubmitted && (
-            <p className="text-red-500 text-sm">Search engine is required.</p>
-          )}
-        </div>
+        {sidebarMode === "addKeyword" ? (
+          <>
+            <h2 className="mb-6 font-bold">Add New Keyword</h2>
+            <div>
+              <label className="block">Keyword</label>
+              <Input
+                type="text"
+                placeholder="Enter keyword"
+                value={newKeyword}
+                onChange={(e) => setNewKeyword(e.target.value)}
+                className={`mb-2 mt-2 h-[50px] text-lg ${
+                  !newKeyword && isSubmitted ? "border-red-500" : ""
+                }`}
+              />
+              {!newKeyword && isSubmitted && (
+                <p className="text-red-500 text-sm">Keyword is required.</p>
+              )}
+            </div>
+            <div>
+              <label className="block">Search Engine</label>
+              <Select
+                onValueChange={(value) => setSelectedSearchEngine(value)}
+                value={selectedSearchEngine}
+              >
+                <SelectTrigger className="w-[400px]">
+                  <SelectValue>{selectedSearchEngine}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Google">Google</SelectItem>
+                  <SelectItem value="Bing">Bing</SelectItem>
+                  <SelectItem value="Yahoo">Yahoo</SelectItem>
+                </SelectContent>
+              </Select>
+              {!selectedSearchEngine && isSubmitted && (
+                <p className="text-red-500 text-sm">
+                  Search engine is required.
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleAddKeyword}>Save Keyword</Button>
+              <Button onClick={() => setIsSidebarOpen(false)} variant="outline">
+                Cancel
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 className="mb-4 text-2xl font-bold text-gray-800 border-b pb-2">
+              Rank History
+            </h2>
+            <h3 className="mb-2 text-lg font-semibold text-gray-600">
+              Keyword: <span className="font-normal">{selectedKeyword}</span>
+            </h3>
+            <h3 className="mb-4 text-lg font-semibold text-gray-600">
+              Website: <span className="font-normal">{selectedWebsite}</span>
+            </h3>
 
-        <div className="flex gap-2">
-          <Button onClick={handleAddKeyword}>Save Keyword</Button>
-          <Button onClick={() => setIsSidebarOpen(false)} variant="outline">
-            Cancel
-          </Button>
-        </div>
+            {history.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full table-auto border-collapse border border-gray-200">
+                  <thead>
+                    <tr className="bg-gray-100 text-left">
+                      <th className="px-4 py-2 text-gray-700 border border-gray-200">
+                        Rank
+                      </th>
+                      <th className="px-4 py-2 text-gray-700 border border-gray-200">
+                        Date
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((item, index) => (
+                      <tr
+                        key={index}
+                        className={`${
+                          index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                        } hover:bg-gray-100`}
+                      >
+                        <td className="px-4 py-2 text-gray-700 border border-gray-200">
+                          {item.rank}
+                        </td>
+                        <td className="px-4 py-2 text-gray-700 border border-gray-200">
+                          {new Date(item.checked_date).toLocaleDateString(
+                            "en-GB",
+                            {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            }
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="mt-4 text-gray-500">No history available.</p>
+            )}
+
+            <Button
+              onClick={() => setIsSidebarOpen(false)}
+              variant="outline"
+              className="mt-4"
+            >
+              Back
+            </Button>
+          </>
+        )}
       </div>
+
       {/* search result table */}
       {isSearchPositionVisible && (
         <div className="mt-10 overflow-x-auto">
