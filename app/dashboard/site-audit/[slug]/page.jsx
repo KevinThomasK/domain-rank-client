@@ -135,7 +135,7 @@ const Page = () => {
       setScrapingJobs((prevJobs) =>
         prevJobs.map((job, idx) =>
           idx === index
-            ? { ...job, status, progress: progress || 100, result }
+            ? { ...job, status, progress: progress || 0, result }
             : job
         )
       );
@@ -253,7 +253,7 @@ const Page = () => {
         )}
       </div>
       {responseMessage && <p>{responseMessage}</p>}
-      <div className="mt-6">
+      {/* <div className="mt-6">
         {scrapingJobs.map((job, index) => (
           <div key={job.id} className="border p-4 rounded shadow mb-4">
             <p>
@@ -275,6 +275,50 @@ const Page = () => {
               <pre className="bg-gray-100 p-2 rounded overflow-x-scroll">
                 {JSON.stringify(job.result, null, 2)}
               </pre>
+            )}
+          </div>
+        ))}
+      </div> */}
+      <div className="mt-6">
+        {scrapingJobs.map((job, index) => (
+          <div key={job.id} className="border p-4 rounded shadow mb-4 bg-white">
+            <p className="text-lg font-semibold">
+              <strong>URL:</strong> {job.url}
+            </p>
+            <p>
+              <strong>Website ID:</strong> {job.websiteId}
+            </p>
+            <p>
+              <strong>Status:</strong>{" "}
+              {job.status === "in-progress" ? (
+                <span className="text-yellow-500 font-semibold">
+                  In Progress
+                </span>
+              ) : job.status === "completed" ? (
+                <span className="text-green-500 font-semibold">Completed</span>
+              ) : (
+                <span className="text-red-500 font-semibold">{job.status}</span>
+              )}
+            </p>
+            {job.status === "in-progress" && (
+              <div className="mt-2">
+                <strong>Progress:</strong>
+                <div className="relative w-full h-4 bg-gray-200 rounded mt-1">
+                  <div
+                    className="absolute top-0 left-0 h-4 bg-blue-600 rounded transition-all duration-300 ease-in-out"
+                    style={{ width: `${job.progress}%` }}
+                  />
+                </div>
+                <p className="text-sm text-gray-600 mt-1">{job.progress}%</p>
+              </div>
+            )}
+            {job.status === "completed" && job.result && (
+              <div className="mt-2">
+                <strong>Result:</strong>
+                <pre className="bg-gray-100 p-2 rounded overflow-x-scroll text-sm">
+                  {JSON.stringify(job.result, null, 2)}
+                </pre>
+              </div>
             )}
           </div>
         ))}
