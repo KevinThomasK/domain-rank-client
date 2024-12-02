@@ -410,8 +410,6 @@ export default function SingleProjectPage() {
     }
   };
 
-  console.log(keywordsData, "kwd");
-
   //check rank of all keywords(auto)
   const handleAutoRankCheck = async () => {
     setLoading(true);

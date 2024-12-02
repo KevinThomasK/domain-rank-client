@@ -336,9 +336,18 @@ export default function DashboardPage({ children }) {
                 <TbWorldSearch className="text-xl" /> Keywords
               </span>
             )}
-            <button className="flex items-center gap-3 text-lg text-gray-700 hover:text-black">
-              <FaChartBar className="text-xl" /> Site Audit
-            </button>
+            {selectedProject ? (
+              <Link
+                className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+                href={`/dashboard/site-audit/${selectedProject.id}`}
+              >
+                <FaChartBar className="text-xl" /> Site Audit
+              </Link>
+            ) : (
+              <span className="flex items-center gap-3 text-lg text-gray-400 cursor-not-allowed">
+                <FaChartBar className="text-xl" /> Site Audit
+              </span>
+            )}
           </nav>
         </aside>
 
