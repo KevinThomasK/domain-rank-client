@@ -1,5 +1,5 @@
 "use client";
-import { io } from "socket.io-client";
+
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -14,10 +14,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { FaStaylinked } from "react-icons/fa";
 import axios from "axios";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const page = () => {
+const Page = () => {
   const { data: session, status } = useSession();
   const { slug } = useParams();
   const [project, setProject] = useState("");
@@ -280,159 +280,7 @@ const page = () => {
         ))}
       </div>
     </div>
-    // <div className="container mx-auto p-4">
-    //   <ToastContainer />
-
-    //   <h1 className="text-2xl font-bold mb-4">Web Scraper</h1>
-
-    //   <button
-    //     onClick={() => startScraping("https://paragonrestaurant.in/", "324")}
-    //     className="bg-blue-500 text-white px-4 py-2 rounded"
-    //   >
-    //     Start Scraping
-    //   </button>
-
-    //   <div className="mt-6">
-    //     {scrapingJobs.map((job, index) => (
-    //       <div key={job.id} className="border p-4 rounded shadow mb-4">
-    //         <p>
-    //           <strong>URL:</strong> {job.url}
-    //         </p>
-    //         <p>
-    //           <strong>Website ID:</strong> {job.websiteId}
-    //         </p>
-    //         <p>
-    //           <strong>Status:</strong>{" "}
-    //           {job.status === "in-progress" ? "In Progress" : job.status}
-    //         </p>
-    //         {job.status === "in-progress" && (
-    //           <p>
-    //             <strong>Progress:</strong> {job.progress}%
-    //           </p>
-    //         )}
-    //         {job.status === "completed" && job.result && (
-    //           <pre className="bg-gray-100 p-2 rounded overflow-x-scroll">
-    //             {JSON.stringify(job.result, null, 2)}
-    //           </pre>
-    //         )}
-    //       </div>
-    //     ))}
-    //   </div>
-    // </div>
   );
 };
 
-export default page;
-
-// import React, { useState, useEffect } from "react";
-// import axios from "axios";
-// import { ToastContainer, toast } from "react-toastify";
-// import "react-toastify/dist/ReactToastify.css";
-
-// const Scraper = () => {
-//   const [scrapingJobs, setScrapingJobs] = useState([]);
-
-//   const startScraping = async (url, websiteId) => {
-//     try {
-//       const response = await axios.post("http://localhost:5000/scrape", {
-//         url,
-//         websiteId,
-//       });
-
-//       const newJob = {
-//         id: response.data.jobId,
-//         status: "in-progress",
-//         progress: 0,
-//         websiteId,
-//         url,
-//       };
-
-//       setScrapingJobs((prevJobs) => [...prevJobs, newJob]);
-
-//       toast.success("Scraping started!");
-//     } catch (error) {
-//       toast.error("Failed to start scraping.");
-//       console.error(error.message);
-//     }
-//   };
-
-//   const fetchJobStatus = async (jobId, index) => {
-//     try {
-//       const response = await axios.get(
-//         `http://localhost:5000/job-status/${jobId}`
-//       );
-
-//       const { status, progress, result } = response.data;
-//       setScrapingJobs((prevJobs) =>
-//         prevJobs.map((job, idx) =>
-//           idx === index
-//             ? { ...job, status, progress: progress || 100, result }
-//             : job
-//         )
-//       );
-//     } catch (error) {
-//       console.error("Failed to fetch job status:", error.message);
-//     }
-//   };
-
-//   useEffect(() => {
-//     const interval = setInterval(() => {
-//       scrapingJobs.forEach((job, index) => {
-//         if (job.status === "in-progress") {
-//           fetchJobStatus(job.id, index);
-//         }
-//       });
-//     }, 2000);
-
-//     return () => clearInterval(interval);
-//   }, [scrapingJobs]);
-
-//   return (
-//     <div className="container mx-auto p-4">
-//       <ToastContainer />
-
-//       <h1 className="text-2xl font-bold mb-4">Web Scraper</h1>
-
-//       <button
-//         onClick={() =>
-//           startScraping("https://example.com", "12345")
-//         }
-//         className="bg-blue-500 text-white px-4 py-2 rounded"
-//       >
-//         Start Scraping
-//       </button>
-
-//       <div className="mt-6">
-//         {scrapingJobs.map((job, index) => (
-//           <div
-//             key={job.id}
-//             className="border p-4 rounded shadow mb-4"
-//           >
-//             <p>
-//               <strong>URL:</strong> {job.url}
-//             </p>
-//             <p>
-//               <strong>Website ID:</strong> {job.websiteId}
-//             </p>
-//             <p>
-//               <strong>Status:</strong>{" "}
-//               {job.status === "in-progress" ? "In Progress" : job.status}
-//             </p>
-//             {job.status === "in-progress" && (
-//               <p>
-//                 <strong>Progress:</strong> {job.progress}%
-//               </p>
-//             )}
-//             {job.status === "completed" && job.result && (
-//               <pre className="bg-gray-100 p-2 rounded overflow-x-scroll">
-//                 {JSON.stringify(job.result, null, 2)}
-//               </pre>
-//             )}
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default Scraper;
+export default Page;
