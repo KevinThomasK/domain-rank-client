@@ -16,6 +16,8 @@ import { FaStaylinked } from "react-icons/fa";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { IoCopyOutline } from "react-icons/io5";
+import { RiSlideshowLine } from "react-icons/ri";
 
 const Page = () => {
   const { data: session, status } = useSession();
@@ -29,6 +31,22 @@ const Page = () => {
   const [responseMessage, setResponseMessage] = useState("");
   // const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL);
   const [scrapingJobs, setScrapingJobs] = useState([]);
+  const [visibleResults, setVisibleResults] = useState({});
+  //Fetch Jobs on Page Load
+  useEffect(() => {
+    const fetchJobsFromDB = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/scraping-jobs`
+        );
+        setScrapingJobs(response.data || []);
+      } catch (error) {
+        console.error("Failed to fetch jobs from database:", error.message);
+      }
+    };
+
+    fetchJobsFromDB();
+  }, []);
 
   const startScraping = async (url, websiteId) => {
     try {
@@ -59,6 +77,7 @@ const Page = () => {
     }
   };
 
+  //project details fetch
   useEffect(() => {
     const fetchProjectDetails = async () => {
       try {
@@ -91,6 +110,7 @@ const Page = () => {
     }
   }, [slug, session?.user.token]);
 
+  //website fetch
   useEffect(() => {
     const fetchWebsites = async () => {
       try {
@@ -124,14 +144,34 @@ const Page = () => {
     }
   }, [slug, session?.user.token]);
 
+  // const fetchJobStatus = async (jobId, index) => {
+  //   try {
+  //     const response = await axios.get(
+  //       `${process.env.NEXT_PUBLIC_BACKEND_URL}/job-status/${jobId}`
+  //     );
+
+  //     const { status, progress, result } = response.data;
+  //     console.log(status, progress, result, "s-p-r");
+  //     setScrapingJobs((prevJobs) =>
+  //       prevJobs.map((job, idx) =>
+  //         idx === index
+  //           ? { ...job, status, progress: progress || 0, result }
+  //           : job
+  //       )
+  //     );
+  //   } catch (error) {
+  //     console.error("Failed to fetch job status:", error.message);
+  //   }
+  // };
+
+  // /fetchJobStatus function
   const fetchJobStatus = async (jobId, index) => {
     try {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/job-status/${jobId}`
       );
-
       const { status, progress, result } = response.data;
-      console.log(status, progress, result, "s-p-r");
+
       setScrapingJobs((prevJobs) =>
         prevJobs.map((job, idx) =>
           idx === index
@@ -139,6 +179,17 @@ const Page = () => {
             : job
         )
       );
+
+      // Save the updated jobs to the database
+      const updatedJobs = scrapingJobs.map((job, idx) =>
+        idx === index
+          ? { ...job, status, progress: progress || 0, result }
+          : job
+      );
+
+      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/scraping-jobs`, {
+        jobs: updatedJobs,
+      });
     } catch (error) {
       console.error("Failed to fetch job status:", error.message);
     }
@@ -164,50 +215,19 @@ const Page = () => {
     setSelectedWebsiteId(parsedValue.id);
   };
 
-  const handleScrape = async () => {
-    if (!selectedWebsite || !selectedWebsiteId) {
-      alert("Please select a website and websiteId!");
-      return;
-    }
-
-    try {
-      const requestBody = {
-        url: selectedWebsite, // Assuming selectedWebsite contains the URL
-        websiteId: selectedWebsiteId, // Assuming selectedWebsiteId contains the website ID
-      };
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/scrape`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.user.token}`, // Include token if required
-          },
-          body: JSON.stringify(requestBody), // Send the JSON body
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.error || "Failed to start the scraping task."
-        );
-      }
-
-      const responseData = await response.json(); // Parse the JSON response
-      setResponseMessage(`Job started! Job ID: ${responseData.jobId}`);
-      console.log(responseData, "response data");
-    } catch (error) {
-      console.error("Error starting scrape:", error);
-      setResponseMessage(
-        error.message || "An error occurred while starting the scrape."
-      );
-    } finally {
-      console.log("first");
-    }
+  const toggleResultVisibility = (index) => {
+    setVisibleResults((prevState) => ({
+      ...prevState,
+      [index]: !prevState[index],
+    }));
   };
 
+  const copyToClipboard = (result) => {
+    navigator.clipboard.writeText(JSON.stringify(result, null, 2));
+    toast("Copied!", {
+      theme: "colored",
+    });
+  };
   return (
     <div>
       <div>
@@ -253,41 +273,16 @@ const Page = () => {
         )}
       </div>
       {responseMessage && <p>{responseMessage}</p>}
-      {/* <div className="mt-6">
-        {scrapingJobs.map((job, index) => (
-          <div key={job.id} className="border p-4 rounded shadow mb-4">
-            <p>
-              <strong>URL:</strong> {job.url}
-            </p>
-            <p>
-              <strong>Website ID:</strong> {job.websiteId}
-            </p>
-            <p>
-              <strong>Status:</strong>{" "}
-              {job.status === "in-progress" ? "In Progress" : job.status}
-            </p>
-            {job.status === "in-progress" && (
-              <p>
-                <strong>Progress:</strong> {job.progress}%
-              </p>
-            )}
-            {job.status === "completed" && job.result && (
-              <pre className="bg-gray-100 p-2 rounded overflow-x-scroll">
-                {JSON.stringify(job.result, null, 2)}
-              </pre>
-            )}
-          </div>
-        ))}
-      </div> */}
+
       <div className="mt-6">
         {scrapingJobs.map((job, index) => (
           <div key={job.id} className="border p-4 rounded shadow mb-4 bg-white">
             <p className="text-lg font-semibold">
               <strong>URL:</strong> {job.url}
             </p>
-            <p>
+            {/* <p>
               <strong>Website ID:</strong> {job.websiteId}
-            </p>
+            </p> */}
             <p>
               <strong>Status:</strong>{" "}
               {job.status === "in-progress" ? (
@@ -312,12 +307,34 @@ const Page = () => {
                 <p className="text-sm text-gray-600 mt-1">{job.progress}%</p>
               </div>
             )}
-            {job.status === "completed" && job.result && (
+            {/* {job.status === "completed" && job.result && (
               <div className="mt-2">
                 <strong>Result:</strong>
                 <pre className="bg-gray-100 p-2 rounded overflow-x-scroll text-sm">
                   {JSON.stringify(job.result, null, 2)}
                 </pre>
+              </div>
+            )} */}
+            {job.status === "completed" && job.result && (
+              <div className="mt-2">
+                <Button
+                  onClick={() => toggleResultVisibility(index)}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mr-2"
+                >
+                  <RiSlideshowLine />{" "}
+                  {visibleResults[index] ? "Hide Result" : "Show Result"}
+                </Button>
+                <Button
+                  onClick={() => copyToClipboard(job.result)}
+                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                >
+                  <IoCopyOutline /> Copy Result
+                </Button>
+                {visibleResults[index] && (
+                  <pre className="bg-gray-100 p-2 rounded overflow-x-scroll text-sm mt-2">
+                    {JSON.stringify(job.result, null, 2)}
+                  </pre>
+                )}
               </div>
             )}
           </div>
