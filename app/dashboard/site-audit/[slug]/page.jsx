@@ -422,7 +422,8 @@ const Page = () => {
                                     Meta Description:
                                   </p>
                                   <p className="text-gray-700">
-                                    {page.metaTags?.Description}
+                                    {page.metaTags?.description ||
+                                      page.metaTags?.Description}
                                   </p>
                                 </div>
                                 <div className="mt-4">
@@ -430,7 +431,8 @@ const Page = () => {
                                     Meta Keywords:
                                   </p>
                                   <p className="text-gray-700">
-                                    {page.metaTags?.Keywords}
+                                    {page.metaTags?.keywords ||
+                                      page.metaTags?.Keywords}
                                   </p>
                                 </div>
                               </div>
