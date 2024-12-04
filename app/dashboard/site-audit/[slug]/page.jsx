@@ -32,6 +32,8 @@ const Page = () => {
   // const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL);
   const [scrapingJobs, setScrapingJobs] = useState([]);
   const [visibleResults, setVisibleResults] = useState({});
+  const [showResult, setShowResult] = useState(false);
+
   //Fetch Jobs on Page Load
   useEffect(() => {
     const fetchJobsFromDB = async () => {
@@ -50,7 +52,7 @@ const Page = () => {
 
   const startScraping = async (url, websiteId) => {
     try {
-      toast.info(`Site Audit started for ${selectedWebsite}`);
+      //toast.info(`Site Audit started for ${selectedWebsite}`);
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/scrape`,
         {
@@ -68,7 +70,7 @@ const Page = () => {
       };
 
       setScrapingJobs((prevJobs) => [...prevJobs, newJob]);
-      console.log(scrapingJobs, "scrj");
+      //console.log(scrapingJobs, "scrj");
 
       toast.success("Scraping started!");
     } catch (error) {
@@ -167,6 +169,7 @@ const Page = () => {
   // /fetchJobStatus function
   const fetchJobStatus = async (jobId, index) => {
     try {
+      console.log(jobId, "job id");
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/job-status/${jobId}`
       );
@@ -187,8 +190,9 @@ const Page = () => {
           : job
       );
 
+      const validJobs = scrapingJobs.filter((job) => job.websiteId);
       await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/scraping-jobs`, {
-        jobs: updatedJobs,
+        jobs: validJobs,
       });
     } catch (error) {
       console.error("Failed to fetch job status:", error.message);
@@ -204,10 +208,10 @@ const Page = () => {
       });
     }, 2000);
 
+    //console.log(interval, "intervel");
+
     return () => clearInterval(interval);
   }, [scrapingJobs]);
-
-  //socket effect
 
   const handleWebsiteChange = (value) => {
     const parsedValue = JSON.parse(value);
@@ -228,6 +232,11 @@ const Page = () => {
       theme: "colored",
     });
   };
+
+  const handleShowResult = () => {
+    setShowResult(!showResult);
+  };
+
   return (
     <div>
       <div>
@@ -273,7 +282,6 @@ const Page = () => {
         )}
       </div>
       {responseMessage && <p>{responseMessage}</p>}
-
       <div className="mt-6">
         {scrapingJobs.map((job, index) => (
           <div key={job.id} className="border p-4 rounded shadow mb-4 bg-white">
@@ -307,14 +315,7 @@ const Page = () => {
                 <p className="text-sm text-gray-600 mt-1">{job.progress}%</p>
               </div>
             )}
-            {/* {job.status === "completed" && job.result && (
-              <div className="mt-2">
-                <strong>Result:</strong>
-                <pre className="bg-gray-100 p-2 rounded overflow-x-scroll text-sm">
-                  {JSON.stringify(job.result, null, 2)}
-                </pre>
-              </div>
-            )} */}
+
             {job.status === "completed" && job.result && (
               <div className="mt-2">
                 <Button
