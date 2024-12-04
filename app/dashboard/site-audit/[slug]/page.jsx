@@ -18,6 +18,8 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { IoCopyOutline } from "react-icons/io5";
 import { RiSlideshowLine } from "react-icons/ri";
+import hljs from "highlight.js/lib/core";
+import "highlight.js/styles/github.css";
 
 const Page = () => {
   const { data: session, status } = useSession();
@@ -33,6 +35,11 @@ const Page = () => {
   const [scrapingJobs, setScrapingJobs] = useState([]);
   const [visibleResults, setVisibleResults] = useState({});
   const [showResult, setShowResult] = useState(false);
+  const [isLinksVisible, setLinksVisible] = useState(false);
+  const [isImagesVisible, setImagesVisible] = useState(false);
+  const [isPagesVisible, setPagesVisible] = useState(false);
+  const [pageIndex, setPageIndex] = useState(0); // Track the current page index
+  const pagesPerPage = 10; // Show 10 pages at a time
 
   //Fetch Jobs on Page Load
   useEffect(() => {
@@ -331,10 +338,108 @@ const Page = () => {
                 >
                   <IoCopyOutline /> Copy Result
                 </Button>
-                {visibleResults[index] && (
+                {/* {visibleResults[index] && (
                   <pre className="bg-gray-100 p-2 rounded overflow-x-scroll text-sm mt-2">
                     {JSON.stringify(job.result, null, 2)}
                   </pre>
+                )} */}
+                {visibleResults[index] && (
+                  <div className="bg-gray-50 p-4 rounded shadow mt-4 space-y-4">
+                    <div>
+                      <button
+                        onClick={() => setLinksVisible(!isLinksVisible)}
+                        className="font-bold text-lg text-blue-500 underline"
+                      >
+                        Unique Links
+                      </button>
+                      {isLinksVisible && (
+                        <ol className="list-decimal pl-5 mt-2 space-y-2">
+                          {job.result.uniqueLinks.map((link, i) => (
+                            <li
+                              key={i}
+                              className="text-blue-600 hover:underline"
+                            >
+                              <a
+                                href={link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {link}
+                              </a>
+                            </li>
+                          ))}
+                        </ol>
+                      )}
+                    </div>
+                    <div>
+                      <button
+                        onClick={() => setImagesVisible(!isImagesVisible)}
+                        className="font-bold text-lg text-blue-500 underline"
+                      >
+                        Unique Images
+                      </button>
+                      {isImagesVisible && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-2">
+                          {job.result.uniqueImages.map((image, i) => (
+                            <div
+                              key={i}
+                              className="bg-white p-2 rounded shadow"
+                            >
+                              <img
+                                src={image}
+                                alt={`Unique Image ${i}`}
+                                className="w-full h-auto object-contain"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <button
+                        onClick={() => setPagesVisible(!isPagesVisible)}
+                        className="font-bold text-lg text-blue-500 underline"
+                      >
+                        Pages
+                      </button>
+                      {isPagesVisible && (
+                        <ul className="space-y-4 mt-4">
+                          {job.result.pages.map((page, i) => (
+                            <li
+                              key={i}
+                              className="p-5 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow"
+                            >
+                              <div className="flex flex-col space-y-2">
+                                <strong className="text-2xl font-semibold text-gray-900">
+                                  {page.title}
+                                </strong>
+                                <p className="text-lg font-semibold text-blue-600 truncate">
+                                  {page.url}
+                                </p>{" "}
+                                {/* URL made bold and larger */}
+                                <div className="mt-4">
+                                  <p className="font-semibold text-gray-800">
+                                    Meta Description:
+                                  </p>
+                                  <p className="text-gray-700">
+                                    {page.metaTags?.Description}
+                                  </p>
+                                </div>
+                                <div className="mt-4">
+                                  <p className="font-semibold text-gray-800">
+                                    Meta Keywords:
+                                  </p>
+                                  <p className="text-gray-700">
+                                    {page.metaTags?.Keywords}
+                                  </p>
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             )}
