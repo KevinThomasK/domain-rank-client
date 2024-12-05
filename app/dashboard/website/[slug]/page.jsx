@@ -225,10 +225,10 @@ const ProjectWebsitePage = () => {
         </div>
       </div>
 
-      <table className="min-w-full table-auto border-collapse">
+      <table className="min-w-full table-auto border-collapse text-left">
         <thead>
           <tr>
-            <th className="px-4 py-2 border w-1/2">Website </th>
+            <th className="px-4 py-2 border w-1/2 text-left">Website </th>
             <th className="px-4 py-2 border">Ownership </th>
             <th className="px-4 py-2 border">Website </th>
             <th className="px-4 py-2 border">Status</th>
@@ -237,8 +237,10 @@ const ProjectWebsitePage = () => {
         <tbody>
           {websitesData.length > 0 ? (
             websitesData.map((data, index) => (
-              <tr key={index} className="odd:bg-gray-100 text-center">
-                <td className="px-4 py-2 border">{data.website}</td>
+              <tr key={index} className="odd:bg-gray-100 text-left">
+                <td className="px-4 py-2 border text-left text-blue-600">
+                  {data.website}
+                </td>
                 <td className="px-4 py-2 border">{data.ownership_type}</td>
                 <td className="px-4 py-2 border">{data.website_type}</td>
 

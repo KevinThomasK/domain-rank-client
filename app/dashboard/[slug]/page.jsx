@@ -756,7 +756,9 @@ export default function SingleProjectPage() {
                 ) : keywordsData.length > 0 ? (
                   keywordsData.map((data, index) => (
                     <tr key={index} className="odd:bg-gray-100 text-center">
-                      <td className="px-4 py-2 border">{data.keyword}</td>
+                      <td className="px-4 py-2 border text-left">
+                        {data.keyword}
+                      </td>
                       <td className="px-4 py-2 border">{data.search_engine}</td>
                       <td className="px-4 py-2 border">{"N/A"}</td>
                       <td className="px-4 py-2 border">{"N/A"}</td>

@@ -7,36 +7,34 @@ export const authOptions = {
       name: "credentials",
       credentials: {},
       async authorize(credentials) {
-        const { email, password } = credentials;
+        const { email, otp } = credentials;
 
         try {
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/login`,
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/verify-otp`,
             {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ email, password }),
+              body: JSON.stringify({ email, otp }),
             }
           );
 
+          const { data } = await response.json();
+          //console.log(data, "response");
+
           if (!response.ok) {
-            console.log(response);
+            console.error("Error in response:", data);
             throw new Error("Failed to login");
           }
 
-          const { data } = await response.json();
-          console.log(data, "data");
-
-          // Check if the token is received
           if (data.token) {
-            // Return the user details with the token
             return {
               id: data.id,
               name: data.name,
               email: data.email,
-              token: data.token, // Save token here
+              token: data.token,
             };
           } else {
             console.log("No token received");

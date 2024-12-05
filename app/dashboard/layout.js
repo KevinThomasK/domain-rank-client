@@ -26,6 +26,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CgWebsite } from "react-icons/cg";
 import { TbWorldSearch } from "react-icons/tb";
+import { FaRegUser } from "react-icons/fa";
 
 export default function DashboardPage({ children }) {
   const pathname = usePathname();
@@ -317,11 +318,11 @@ export default function DashboardPage({ children }) {
                 className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
                 href={`/dashboard/website/${selectedProject.id}`}
               >
-                <CgWebsite className="text-xl" /> Websites
+                <CgWebsite className="text-xl text-blue-600" /> Websites
               </Link>
             ) : (
               <span className="flex items-center gap-3 text-lg text-gray-400 cursor-not-allowed">
-                <CgWebsite className="text-xl" /> Websites
+                <CgWebsite className="text-xl text-blue-600" /> Websites
               </span>
             )}
             {selectedProject ? (
@@ -329,11 +330,11 @@ export default function DashboardPage({ children }) {
                 className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
                 href={`/dashboard/${selectedProject.id}`}
               >
-                <TbWorldSearch className="text-xl" /> Keywords
+                <TbWorldSearch className="text-xl text-blue-600" /> Keywords
               </Link>
             ) : (
               <span className="flex items-center gap-3 text-lg text-gray-400 cursor-not-allowed">
-                <TbWorldSearch className="text-xl" /> Keywords
+                <TbWorldSearch className="text-xl text-blue-600" /> Keywords
               </span>
             )}
             {selectedProject ? (
@@ -341,13 +342,19 @@ export default function DashboardPage({ children }) {
                 className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
                 href={`/dashboard/site-audit/${selectedProject.id}`}
               >
-                <FaChartBar className="text-xl" /> Site Audit
+                <FaChartBar className="text-xl text-blue-600" /> Site Audit
               </Link>
             ) : (
               <span className="flex items-center gap-3 text-lg text-gray-400 cursor-not-allowed">
-                <FaChartBar className="text-xl" /> Site Audit
+                <FaChartBar className="text-xl text-blue-600" /> Site Audit
               </span>
             )}
+            <Link
+              className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+              href={`/dashboard/user/create-user`}
+            >
+              <FaRegUser className="text-xl text-blue-600" /> Add User
+            </Link>
           </nav>
         </aside>
 
