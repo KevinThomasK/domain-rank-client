@@ -324,10 +324,12 @@ export default function SingleProjectPage() {
   const handleHistory = async (index) => {
     const keywordId = keywordsData[index].id;
     setSelectedKeyword(keywordsData[index].keyword);
+
     if (!keywordId || !selectedWebsiteId) {
       toast.info("Website not selected");
       return;
     }
+
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/rankhistory/${keywordId}/${selectedWebsiteId}`,
@@ -342,16 +344,30 @@ export default function SingleProjectPage() {
 
       const result = await response.json();
       if (response.ok) {
+        if (result.length === 0) {
+          // Handle case where no history is found
+          toast.info("No history found for the selected keyword and website.");
+          setHistory([]); // Optionally set an empty state
+          setSidebarMode(null); // Optionally reset sidebar mode
+          setIsSidebarOpen(false);
+          return;
+        }
         setHistory(result);
         setSidebarMode("showHistory");
         setIsSidebarOpen(true);
       } else {
-        toast.error("something went wrong");
+        // Handle backend errors
+        if (response.status === 404 || response.status === 204) {
+          toast.info("No history found for the selected keyword and website.");
+        } else {
+          toast.error("Something went wrong");
+        }
         console.error("Error fetching rankhistory:", result.message);
       }
     } catch (error) {
-      toast.error("something went wrong");
-      console.log(error);
+      // Handle network or other unexpected errors
+      toast.error("Something went wrong");
+      console.error(error);
     }
   };
 

@@ -131,6 +131,7 @@ export default function DashboardPage({ children }) {
       } else {
         const errorData = await response.json();
         toast.error(errorData.message || "Something went wrong");
+        console.log(errorData, "err data");
       }
     } catch (error) {
       console.error("Error creating project:", error);
@@ -169,7 +170,7 @@ export default function DashboardPage({ children }) {
 
   return (
     <>
-      <header className="flex justify-between items-center pb-6 pt-6 pr-10 pl-10 bg-gray-100">
+      <header className="flex justify-between items-center pb-6 pt-6 pr-10 pl-10 bg-gray-100l]">
         {/* Left: SEO AUDITOR Heading */}
         <Link
           href="/dashboard"

@@ -43,7 +43,7 @@ const KeywordTable = ({ data }) => {
                   data.find(
                     (item) =>
                       item.keyword === keyword && item.website === website
-                  )?.latest_manual_check_rank || "N/A";
+                  )?.latest_manual_check_rank || "No Record Found";
 
                 return (
                   <td
