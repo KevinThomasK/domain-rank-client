@@ -77,9 +77,9 @@ const ResultPage = () => {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex ">
       {/* Sidebar */}
-      <div className="w-1/4 max-w-[350px] bg-gray-100 p-4 border-r">
+      <div className="w-1/6 max-w-[350px] bg-gray-100 p-4 border-r  h-screen sticky top-0">
         <h2 className="text-lg font-bold mb-4">Menu</h2>
         <ul className="space-y-2">
           <li>
@@ -158,7 +158,7 @@ const ResultPage = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto ml-4">
+      <div className="flex-1 overflow-y-auto ml-4 w-5/6">
         <div className="sticky top-0 bg-white z-10 border-b-2 border-gray-300 pb-2 mb-6 ">
           <h1 className="font-semibold text-gray-900 p-6">
             <a

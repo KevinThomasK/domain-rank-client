@@ -27,6 +27,8 @@ import { usePathname } from "next/navigation";
 import { CgWebsite } from "react-icons/cg";
 import { TbWorldSearch } from "react-icons/tb";
 import { FaRegUser } from "react-icons/fa";
+import { FaSquareGooglePlus } from "react-icons/fa6";
+import { FaGooglePlusG } from "react-icons/fa";
 
 export default function DashboardPage({ children }) {
   const pathname = usePathname();
@@ -170,7 +172,7 @@ export default function DashboardPage({ children }) {
 
   return (
     <>
-      <header className="flex justify-between items-center pb-6 pt-6 pr-10 pl-10 bg-gray-100l]">
+      <header className="flex justify-between items-center pb-6 pt-6 pr-10 pl-10 bg-gray-100 sticky top-0 border border-b-slate-300 bg-white z-10">
         {/* Left: SEO AUDITOR Heading */}
         <Link
           href="/dashboard"
@@ -308,11 +310,10 @@ export default function DashboardPage({ children }) {
         </div>
       </header>
 
-      <hr />
       {/* Main Content Layout */}
-      <div className="flex">
+      <div className="flex h-[calc(100vh-96px)]">
         {/* Sidebar */}
-        <aside className="w-64 bg-gray-100 border border-r-1 h-screen flex flex-col p-10">
+        <aside className="w-64 bg-gray-100 border-r border-slate-300  flex flex-col p-10 sticky top-[96px]">
           <nav className="space-y-4">
             {selectedProject ? (
               <Link
@@ -352,6 +353,21 @@ export default function DashboardPage({ children }) {
             )}
             <Link
               className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+              href={`/dashboard/console`}
+            >
+              <FaSquareGooglePlus className="text-xl text-blue-600" /> Search
+              Console
+            </Link>
+
+            <Link
+              className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+              href={`/dashboard/analyticsconsole`}
+            >
+              <FaGooglePlusG className="text-xl text-blue-600" />
+              Analytics
+            </Link>
+            <Link
+              className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
               href={`/dashboard/user/create-user`}
             >
               <FaRegUser className="text-xl text-blue-600" /> Add User
@@ -360,7 +376,7 @@ export default function DashboardPage({ children }) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-10">{children}</main>
+        <main className="flex-1 p-10 overflow-y-auto">{children}</main>
       </div>
     </>
   );
