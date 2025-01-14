@@ -24,22 +24,6 @@ const AnalyticsProperties = () => {
 
   useEffect(() => {
     // Fetch properties from the API
-    // const fetchProperties = async () => {
-    //   try {
-    //     const response = await fetch(
-    //       `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/analytics/properties`
-    //     );
-    //     if (!response.ok) {
-    //       throw new Error("Failed to fetch properties");
-    //     }
-    //     const data = await response.json();
-    //     setProperties(data.data);
-    //   } catch (err) {
-    //     setError(err.message);
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // };
 
     const fetchProperties = async () => {
       try {
@@ -148,10 +132,12 @@ const AnalyticsProperties = () => {
   if (loading) {
     return (
       <>
-        <Skeleton className="w-full h-32 mb-6" />
-        <Skeleton className="w-full h-32 mb-6" />
-        <Skeleton className="w-full h-32 mb-6" />
-        <Skeleton className="w-full h-32" />
+        <Skeleton className="w-full h-10 mb-6" />
+        <Skeleton className="w-full h-10 mb-6" />
+        <Skeleton className="w-full h-10 mb-6" />
+        <Skeleton className="w-full h-10 mb-6" />
+        <Skeleton className="w-full h-10 mb-6" />
+        <Skeleton className="w-full h-10" />
       </>
     );
   }

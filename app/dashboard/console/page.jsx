@@ -534,13 +534,13 @@ const Dashboard = () => {
 
                         {/* Apply Filters Button */}
                         <div>
-                          <button
+                          <Button
                             onClick={() => applyFilters(site)}
-                            className="ml-4 px-8 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="bg-green-500"
                           >
                             <IoFilter className="inline-block mr-2" />
                             Apply
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -803,13 +803,13 @@ const Dashboard = () => {
 
                       {/* Apply Filters Button */}
                       <div>
-                        <button
+                        <Button
                           onClick={() => applyPageFilters(site)}
-                          className="ml-4 px-8 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="bg-green-500"
                         >
-                          <IoFilter className="inline-block mr-2" />
+                          <IoFilter className="inline-block mr-1" />
                           Apply
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>
