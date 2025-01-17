@@ -10,7 +10,7 @@ import { GrDocumentConfig } from "react-icons/gr";
 import { CiSquareRemove } from "react-icons/ci";
 import { FaRegTrashAlt } from "react-icons/fa";
 
-const page = () => {
+const Page = () => {
   const { data: session } = useSession();
   const [externalSites, setExternalSites] = useState([]);
   const [existingSites, setExistingSites] = useState([]);
@@ -219,4 +219,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;
