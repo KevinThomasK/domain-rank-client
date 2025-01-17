@@ -29,6 +29,8 @@ import { TbWorldSearch } from "react-icons/tb";
 import { FaRegUser } from "react-icons/fa";
 import { FaSquareGooglePlus } from "react-icons/fa6";
 import { FaGooglePlusG } from "react-icons/fa";
+import { MdOutlinePhonelinkSetup } from "react-icons/md";
+import { IoTimer } from "react-icons/io5";
 
 export default function DashboardPage({ children }) {
   const pathname = usePathname();
@@ -314,7 +316,7 @@ export default function DashboardPage({ children }) {
       <div className="flex h-[calc(100vh-96px)]">
         {/* Sidebar */}
         <aside className="w-64 bg-gray-100 border-r border-slate-300  flex flex-col p-10 sticky top-[96px]">
-          <nav className="space-y-4">
+          <nav className="space-y-4 ">
             {selectedProject ? (
               <Link
                 className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
@@ -371,6 +373,19 @@ export default function DashboardPage({ children }) {
               href={`/dashboard/user/create-user`}
             >
               <FaRegUser className="text-xl text-blue-600" /> Add User
+            </Link>
+            <Link
+              className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+              href={`/dashboard/backlinks`}
+            >
+              <MdOutlinePhonelinkSetup className="text-xl text-blue-600" />{" "}
+              Backlinks
+            </Link>
+            <Link
+              className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+              href={`/dashboard/website-monitor`}
+            >
+              <IoTimer className="text-xl text-blue-600" /> Website Monitor
             </Link>
           </nav>
         </aside>

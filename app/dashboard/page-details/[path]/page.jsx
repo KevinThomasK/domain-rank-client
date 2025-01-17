@@ -118,7 +118,7 @@ export default function PageDetails({ params }) {
   }, [propertyId, path]);
 
   const chartData = {
-    labels: trafficData.map((item) => {
+    labels: trafficData?.map((item) => {
       const date = item.date; // Format: YYYYMMDD
       const year = date.substring(0, 4);
       const month = date.substring(4, 6);
@@ -141,7 +141,7 @@ export default function PageDetails({ params }) {
     ],
   };
 
-  console.log(trafficData, "traffic data");
+  
 
   if (loading)
     return (
