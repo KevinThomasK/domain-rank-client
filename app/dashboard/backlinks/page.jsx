@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { IoMdAdd } from "react-icons/io";
 
 const BacklinksList = () => {
   const [backlinks, setBacklinks] = useState([]);
@@ -17,8 +18,10 @@ const BacklinksList = () => {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("backlinks_website");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isBSidebarOpen, setIsBSidebarOpen] = useState(false);
   const [newWebsite, setNewWebsite] = useState("");
   const [newWebsiteUrl, setNewWebsiteUrl] = useState("");
+  const [remarks, setRemarks] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [selectedOwnership, setSelectedOwnership] = useState("Manual");
   const [selectedWebsiteType, setSelectedWebsiteType] = useState("Text");
@@ -46,10 +49,54 @@ const BacklinksList = () => {
 
   useEffect(() => {
     fetchBacklinks();
-  }, []);
+  }, []); 
 
   const handleAddWebsite = () => {
     console.log("first");
+  };
+
+  const handleAddBacklinkWebsite = async () => {
+    setIsSubmitted(true);
+    if (!newWebsite || !newWebsiteUrl) {
+      return; // Don't proceed if the required fields are empty
+    }
+
+    const token = localStorage.getItem("token"); // Assuming you store the token in localStorage
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/backlinks_website`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // Add token to the header
+          },
+          body: JSON.stringify({
+            Website_name: newWebsite,
+            URL: newWebsiteUrl,
+            Remarks: remarks,
+            // Created_by omitted, letting backend handle it (set to null or default value)
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to create backlink");
+      }
+
+      const data = await response.json();
+      console.log("Backlink created:", data);
+      toast.success("created backlink");
+      // Clear form fields after successful submission
+      setNewWebsite("");
+      setNewURL("");
+      setRemarks("");
+      setIsBSidebarOpen(false); // Close the sidebar after saving
+    } catch (error) {
+      toast.error("something went wrong");
+      console.error("Error creating backlink:", error);
+    }
   };
 
   return (
@@ -58,6 +105,13 @@ const BacklinksList = () => {
         <h1 className="text-3xl font-bold text-gray-800 mb-6">
           Back Links Dashboard
         </h1>
+        <Button
+          className="bg-green-600"
+          onClick={() => setIsBSidebarOpen(true)}
+        >
+          <IoMdAdd />
+          Add Backlinks Website
+        </Button>
       </div>
       <div className="flex justify-between mt-5">
         <div className="w-1/6 pr-4 ">
@@ -256,6 +310,67 @@ const BacklinksList = () => {
         <div className="flex gap-2 mt-5">
           <Button onClick={handleAddWebsite}>Save Backlink</Button>
           <Button onClick={() => setIsSidebarOpen(false)} variant="outline">
+            Cancel
+          </Button>
+        </div>
+      </div>
+      {/* sidebar */}
+      <div
+        className={`fixed top-0 right-0 bottom-0 w-[700px] bg-white shadow-lg p-5 flex flex-col gap-4 z-50 transform transition-all duration-300 ${
+          isBSidebarOpen
+            ? "translate-x-0 opacity-100"
+            : "translate-x-full opacity-0"
+        }`}
+      >
+        <h2 className="mb-6 font-bold">Add Backlink </h2>
+        <div>
+          <label className="block">Website Name</label>
+          <Input
+            type="text"
+            placeholder="Enter Website Name"
+            value={newWebsite}
+            onChange={(e) => setNewWebsite(e.target.value)}
+            className={`mb-2 mt-2 h-[50px] text-lg ${
+              !newWebsite && isSubmitted ? "border-red-500" : ""
+            }`}
+          />
+          {!newWebsite && isSubmitted && (
+            <p className="text-red-500 text-sm">Website url is required.</p>
+          )}
+        </div>{" "}
+        <div>
+          <label className="block">Website Url </label>
+          <Input
+            type="text"
+            placeholder="Enter Website url"
+            value={newWebsiteUrl}
+            onChange={(e) => setNewWebsiteUrl(e.target.value)}
+            className={`mb-2 mt-2 h-[50px] text-lg ${
+              !newWebsite && isSubmitted ? "border-red-500" : ""
+            }`}
+          />
+          {!newWebsite && isSubmitted && (
+            <p className="text-red-500 text-sm">Website url is required.</p>
+          )}
+        </div>{" "}
+        <div>
+          <label className="block">Remarks </label>
+          <Input
+            type="text"
+            placeholder="Enter remarks"
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+            className={`mb-2 mt-2 h-[50px] text-lg ${
+              !newWebsite && isSubmitted ? "border-red-500" : ""
+            }`}
+          />
+          {!newWebsite && isSubmitted && (
+            <p className="text-red-500 text-sm">Website url is required.</p>
+          )}
+        </div>{" "}
+        <div className="flex gap-2 mt-5">
+          <Button onClick={handleAddBacklinkWebsite}>Save Backlink</Button>
+          <Button onClick={() => setIsBSidebarOpen(false)} variant="outline">
             Cancel
           </Button>
         </div>
