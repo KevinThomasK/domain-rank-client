@@ -20,21 +20,26 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FaPlus, FaSearch, FaChartBar } from "react-icons/fa";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSelectedLayoutSegment } from "next/navigation";
 import { toast } from "react-toastify";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CgWebsite } from "react-icons/cg";
 import { TbWorldSearch } from "react-icons/tb";
-import { FaRegUser } from "react-icons/fa";
+import { FaUserCog } from "react-icons/fa";
 import { FaSquareGooglePlus } from "react-icons/fa6";
 import { FaGooglePlusG } from "react-icons/fa";
 import { MdOutlinePhonelinkSetup } from "react-icons/md";
 import { IoTimer } from "react-icons/io5";
+import { TbCloudSearch } from "react-icons/tb";
+import { RiOpenaiFill } from "react-icons/ri";
+import { MdDomain } from "react-icons/md";
+import { MdOutlineDomainVerification } from "react-icons/md";
 
 export default function DashboardPage({ children }) {
   const pathname = usePathname();
   const router = useRouter();
+  const segment = useSelectedLayoutSegment();
   const { data: session, status } = useSession(); // Get session data (including token)
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -142,6 +147,8 @@ export default function DashboardPage({ children }) {
       toast.error("There was an error creating the project.");
     }
   };
+
+  console.log("Current segment:", segment);
 
   const dropdownFilteredProjects = projects.filter(
     (project) =>
@@ -315,77 +322,265 @@ export default function DashboardPage({ children }) {
       {/* Main Content Layout */}
       <div className="flex h-[calc(100vh-96px)]">
         {/* Sidebar */}
-        <aside className="w-64 bg-gray-100 border-r border-slate-300  flex flex-col p-10 sticky top-[96px]">
-          <nav className="space-y-4 ">
+        <aside className="w-64 bg-gray-100 border-r border-slate-300  flex flex-col sticky top-[96px]">
+          <nav className="space-y-2">
+            {/* Websites Link */}
             {selectedProject ? (
               <Link
-                className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+                className={`flex items-center gap-3 text-lg p-2 pl-6 rounded-md ${
+                  segment === "website"
+                    ? "bg-blue-100 text-[#1E40AF] "
+                    : "text-gray-700 hover:text-black"
+                }`}
                 href={`/dashboard/website/${selectedProject.id}`}
               >
-                <CgWebsite className="text-xl text-blue-600" /> Websites
+                <CgWebsite
+                  className={`text-xl ${
+                    segment === "website" ? "text-[#2563EB]" : "text-gray-500"
+                  }`}
+                />
+                Websites
               </Link>
             ) : (
-              <span className="flex items-center gap-3 text-lg text-gray-400 cursor-not-allowed">
-                <CgWebsite className="text-xl text-blue-600" /> Websites
+              <span
+                className="flex items-center gap-3 text-lg text-gray-400 cursor-not-allowed p-2"
+                title="Select a project to enable this link"
+              >
+                <CgWebsite className="text-xl text-gray-400" /> Websites
               </span>
             )}
+
+            {/* Keywords Link */}
             {selectedProject ? (
               <Link
-                className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+                className={`flex items-center gap-3 text-lg p-2 pl-6 rounded-md ${
+                  segment === `${selectedProject.id}`
+                    ? "bg-blue-100 text-[#1E40AF] "
+                    : "text-gray-700 hover:text-black"
+                }`}
                 href={`/dashboard/${selectedProject.id}`}
               >
-                <TbWorldSearch className="text-xl text-blue-600" /> Keywords
+                <TbWorldSearch
+                  className={`text-xl ${
+                    segment === `${selectedProject.id}`
+                      ? "text-[#2563EB]"
+                      : "text-gray-500"
+                  }`}
+                />
+                Keywords
               </Link>
             ) : (
-              <span className="flex items-center gap-3 text-lg text-gray-400 cursor-not-allowed">
-                <TbWorldSearch className="text-xl text-blue-600" /> Keywords
+              <span
+                className="flex items-center gap-3 text-lg text-gray-400 cursor-not-allowed p-2"
+                title="Select a project to enable this link"
+              >
+                <TbWorldSearch className="text-xl text-gray-400" /> Keywords
               </span>
             )}
+
+            {/* Site Audit Link */}
             {selectedProject ? (
               <Link
-                className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+                className={`flex items-center gap-3 text-lg p-2 pl-6 rounded-md ${
+                  segment === "site-audit"
+                    ? "bg-blue-100 text-[#1E40AF] "
+                    : "text-gray-700 hover:text-black"
+                }`}
                 href={`/dashboard/site-audit/${selectedProject.id}`}
               >
-                <FaChartBar className="text-xl text-blue-600" /> Site Audit
+                <FaChartBar
+                  className={`text-xl ${
+                    segment === "site-audit"
+                      ? "text-[#2563EB]"
+                      : "text-gray-500"
+                  }`}
+                />
+                Site Audit
               </Link>
             ) : (
-              <span className="flex items-center gap-3 text-lg text-gray-400 cursor-not-allowed">
-                <FaChartBar className="text-xl text-blue-600" /> Site Audit
+              <span
+                className="flex items-center gap-3 text-lg text-gray-400 cursor-not-allowed p-2"
+                title="Select a project to enable this link"
+              >
+                <FaChartBar className="text-xl text-gray-400" /> Site Audit
               </span>
             )}
+
+            {/* Search Console Link */}
             <Link
-              className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+              className={`flex items-center gap-3 text-lg p-2 pl-6 rounded-md ${
+                segment === "console"
+                  ? "bg-blue-100 text-[#1E40AF] "
+                  : "text-gray-700 hover:text-black"
+              }`}
               href={`/dashboard/console`}
             >
-              <FaSquareGooglePlus className="text-xl text-blue-600" /> Search
-              Console
+              <FaSquareGooglePlus
+                className={`text-xl ${
+                  segment === "console" ? "text-[#2563EB]" : "text-gray-500"
+                }`}
+              />
+              Search Console
             </Link>
 
+            {/* Analytics Link */}
             <Link
-              className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+              className={`flex items-center gap-3 text-lg p-2 pl-6 rounded-md ${
+                segment === "analyticsconsole"
+                  ? "bg-blue-100 text-[#1E40AF] "
+                  : "text-gray-700 hover:text-black"
+              }`}
               href={`/dashboard/analyticsconsole`}
             >
-              <FaGooglePlusG className="text-xl text-blue-600" />
+              <FaGooglePlusG
+                className={`text-xl ${
+                  segment === "analyticsconsole"
+                    ? "text-[#2563EB]"
+                    : "text-gray-500"
+                }`}
+              />
               Analytics
             </Link>
+
+            {/* Add User Link */}
             <Link
-              className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+              className={`flex items-center gap-3 text-lg p-2 pl-6 rounded-md ${
+                segment === "user"
+                  ? "bg-blue-100 text-[#1E40AF]"
+                  : "text-gray-700 hover:text-black"
+              }`}
               href={`/dashboard/user/create-user`}
             >
-              <FaRegUser className="text-xl text-blue-600" /> Add User
+              <FaUserCog
+                className={`text-xl ${
+                  segment === "user" ? "text-[#2563EB]" : "text-gray-500"
+                }`}
+              />
+              Add User
             </Link>
+
+            {/* Backlinks Link */}
             <Link
-              className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+              className={`flex items-center gap-3 text-lg p-2 pl-6 rounded-md ${
+                segment === "backlinks"
+                  ? "bg-blue-100 text-[#1E40AF] "
+                  : "text-gray-700 hover:text-black"
+              }`}
               href={`/dashboard/backlinks`}
             >
-              <MdOutlinePhonelinkSetup className="text-xl text-blue-600" />{" "}
+              <MdOutlinePhonelinkSetup
+                className={`text-xl ${
+                  segment === "backlinks" ? "text-[#2563EB]" : "text-gray-500"
+                }`}
+              />
               Backlinks
             </Link>
+
+            {/* Website Monitor Link */}
             <Link
-              className="flex items-center gap-3 text-lg text-gray-700 hover:text-black"
+              className={`flex items-center gap-3 text-lg p-2 pl-6 rounded-md ${
+                segment === "website-monitor"
+                  ? "bg-blue-100 text-[#1E40AF] "
+                  : "text-gray-700 hover:text-black"
+              }`}
               href={`/dashboard/website-monitor`}
             >
-              <IoTimer className="text-xl text-blue-600" /> Website Monitor
+              <IoTimer
+                className={`text-xl ${
+                  segment === "website-monitor"
+                    ? "text-[#2563EB]"
+                    : "text-gray-500"
+                }`}
+              />
+              Website Monitor
+            </Link>
+
+            {/* MOZ Analysis Link */}
+            {selectedProject ? (
+              <Link
+                className={`flex items-center gap-3 text-lg p-2 pl-6 rounded-md ${
+                  segment === "moz"
+                    ? "bg-blue-100 text-[#1E40AF] "
+                    : "text-gray-700 hover:text-black"
+                }`}
+                href={`/dashboard/moz/${selectedProject.id}`}
+              >
+                <TbCloudSearch
+                  className={`text-xl ${
+                    segment === "moz" ? "text-[#2563EB]" : "text-gray-500"
+                  }`}
+                />
+                MOZ Analysis
+              </Link>
+            ) : (
+              <span
+                className="flex items-center gap-3 text-lg text-gray-400 cursor-not-allowed p-2"
+                title="Select a project to enable this link"
+              >
+                <TbCloudSearch className="text-xl text-gray-400" /> MOZ Analysis
+              </span>
+            )}
+
+            {/* AI Assistant Link */}
+            {selectedProject ? (
+              <Link
+                className={`flex items-center gap-3 text-lg p-2 pl-6 rounded-md ${
+                  segment === "ai-assistant"
+                    ? "bg-blue-100 text-[#1E40AF] "
+                    : "text-gray-700 hover:text-black"
+                }`}
+                href={`/dashboard/ai-assistant/${selectedProject.id}`}
+              >
+                <RiOpenaiFill
+                  className={`text-xl ${
+                    segment === "ai-assistant"
+                      ? "text-[#2563EB]"
+                      : "text-gray-500"
+                  }`}
+                />
+                AI Assistant
+              </Link>
+            ) : (
+              <span
+                className="flex items-center gap-3 text-lg text-gray-400 cursor-not-allowed p-2"
+                title="Select a project to enable this link"
+              >
+                <RiOpenaiFill className="text-xl text-gray-400" /> AI Assistant
+              </span>
+            )}
+
+            {/* Domain Age Link */}
+            <Link
+              className={`flex items-center gap-3 text-lg p-2 pl-6 rounded-md ${
+                segment === "domain-age"
+                  ? "bg-blue-100 text-[#1E40AF] "
+                  : "text-gray-700 hover:text-black"
+              }`}
+              href={`/dashboard/domain-age`}
+            >
+              <MdDomain
+                className={`text-xl ${
+                  segment === "domain-age" ? "text-[#2563EB]" : "text-gray-500"
+                }`}
+              />
+              Domain Age
+            </Link>
+
+            {/* DNS Checker Link */}
+            <Link
+              className={`flex items-center gap-3 text-lg p-2 pl-6 rounded-md ${
+                segment === "dns-checker"
+                  ? "bg-blue-100 text-[#1E40AF] "
+                  : "text-gray-700 hover:text-black"
+              }`}
+              href={`/dashboard/dns-checker`}
+            >
+              <MdOutlineDomainVerification
+                className={`text-xl ${
+                  segment === "dns-checker" ? "text-[#2563EB]" : "text-gray-500"
+                }`}
+              />
+              DNS Checker
             </Link>
           </nav>
         </aside>

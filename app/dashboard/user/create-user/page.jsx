@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { toast } from "react-toastify";
 import { MdAssignmentAdd } from "react-icons/md";
-import ProjectModal from "@/components/ProjectModal";
+import AssignProjectModal from "@/components/AssignProjectModal";
 
 export default function UserManagement() {
   const { data: session } = useSession();
@@ -15,7 +15,6 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -27,41 +26,8 @@ export default function UserManagement() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-
-  const openProjectModal = (user) => {
-    setCurrentUser(user);
-    setIsModalOpen(true);
-  };
-
-  const closeProjectModal = () => {
-    setIsModalOpen(false);
-  };
-
-  const assignProjectsToUser = async (selectedProjects) => {
-    console.log(currentUser.id, selectedProjects);
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/assign-project`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.user.token}`,
-          },
-          body: JSON.stringify({
-            user_id: currentUser.id,
-            project_id: selectedProjects,
-          }),
-        }
-      );
-
-      if (!response.ok) throw new Error("Failed to assign projects");
-
-      console.log("Projects assigned successfully");
-    } catch (error) {
-      console.error("Error assigning projects:", error);
-    }
-  };
+  const [selectedProject, setSelectedProject] = useState("");
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
 
   // Fetch users
   useEffect(() => {
@@ -87,7 +53,7 @@ export default function UserManagement() {
     };
 
     fetchUsers();
-  }, []);
+  }, [session]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -113,9 +79,7 @@ export default function UserManagement() {
     };
 
     fetchProjects();
-  }, []);
-
-  console.log(projects, "projects");
+  }, [session]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -211,6 +175,49 @@ export default function UserManagement() {
   const openDeleteModal = (user) => {
     setCurrentUser(user);
     setIsDeleteModalOpen(true);
+  };
+
+  const openAssignModal = (user) => {
+    setCurrentUser(user);
+    setIsAssignModalOpen(true);
+  };
+
+  const closeAssignModal = () => {
+    setCurrentUser(null);
+    setSelectedProject("");
+    setIsAssignModalOpen(false);
+  };
+
+  const assignProject = async () => {
+    if (!currentUser || !selectedProject) {
+      toast.info("Please select a project.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/assign-project`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.user.token}`,
+          },
+          body: JSON.stringify({
+            user_id: currentUser.id,
+            project_id: selectedProject,
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to assign project");
+      const data = await response.json();
+      toast.success("Project assigned successfully!");
+      closeAssignModal();
+    } catch (error) {
+      console.error("Error assigning project:", error);
+      toast.error(error.message);
+    }
   };
 
   return (
@@ -328,8 +335,8 @@ export default function UserManagement() {
                   <td className="border px-4 py-2">{user.status}</td>
                   <td className="border px-4 py-2">
                     <Button
-                      className="mx-2 bg-gray-600 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-gray-700 transform hover:scale-105 transition-transform duration-300"
-                      onClick={() => openProjectModal(user)}
+                      className="mx-2 bg-gray-600 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:bg-gray-700 transform hover:scale-105 transition-transform duration-300 "
+                      onClick={() => openAssignModal(user)}
                     >
                       <MdAssignmentAdd /> Project
                     </Button>
@@ -353,13 +360,6 @@ export default function UserManagement() {
           </table>
         )}
       </div>
-
-      <ProjectModal
-        isOpen={isModalOpen}
-        onClose={closeProjectModal}
-        projects={projects}
-        onAssign={assignProjectsToUser}
-      />
 
       {/* Edit Modal */}
       <Modal
@@ -421,6 +421,17 @@ export default function UserManagement() {
       >
         <p>Are you sure you want to delete "{currentUser?.name}"?</p>
       </Modal>
+
+      {/* Assign Project Modal */}
+      <AssignProjectModal
+        isOpen={isAssignModalOpen}
+        onClose={closeAssignModal}
+        onAssign={assignProject}
+        projects={projects}
+        selectedUser={currentUser}
+        selectedProject={selectedProject}
+        setSelectedProject={setSelectedProject}
+      />
     </main>
   );
 }

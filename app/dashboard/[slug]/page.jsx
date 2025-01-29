@@ -227,15 +227,24 @@ export default function SingleProjectPage() {
     setIsDeleteModalOpen(true);
   };
 
-  //rank check function
-  const fetchKeywordPosition = async (url, keyword) => {
+  const fetchKeywordPosition = async (
+    url,
+    keyword,
+    device = "desktop",
+    location = "us"
+  ) => {
+    console.log(`Checking keyword position for: ${keyword}`);
+    console.log(`Device: ${device}, Location: ${location}`);
+
     const maxResultsToCheck = 100;
     const resultsPerPage = 10;
 
     for (let start = 1; start <= maxResultsToCheck; start += resultsPerPage) {
       try {
         const response = await fetch(
-          `/api/search?query=${encodeURIComponent(keyword)}&start=${start}`
+          `/api/search?query=${encodeURIComponent(
+            keyword
+          )}&start=${start}&device=${device}&location=${location}`
         );
         const data = await response.json();
 
@@ -259,15 +268,20 @@ export default function SingleProjectPage() {
     return "Not Found";
   };
 
-  //rank check manual(single keyword)
-  const handleSearchPosition = async (index) => {
+  // Use the updated function in handleSearchPosition
+  const handleSearchPosition = async (index, device, location) => {
     setLoading(true);
     setPosition(null);
     const url = selectedWebsite;
     const keyword = keywordsData[index].keyword;
 
     try {
-      const resultPosition = await fetchKeywordPosition(url, keyword);
+      const resultPosition = await fetchKeywordPosition(
+        url,
+        keyword,
+        device,
+        location
+      );
       if (isNaN(resultPosition)) {
         toast.info("Not found in the top 100 results");
         return;
@@ -287,6 +301,8 @@ export default function SingleProjectPage() {
           body: JSON.stringify({
             website_id: selectedWebsiteId,
             latest_manual_check_rank: resultPosition,
+            device,
+            location,
           }),
         }
       );
@@ -304,7 +320,7 @@ export default function SingleProjectPage() {
         // Store the search result data in the state
         setSearchPositionData((prevData) => [
           ...prevData,
-          { keyword, domain: url, position: resultPosition },
+          { keyword, domain: url, position: resultPosition, device, location },
         ]);
 
         // Make the position result table visible
@@ -313,7 +329,7 @@ export default function SingleProjectPage() {
         console.error("Error updating keyword rank:", result.message);
       }
     } catch (error) {
-      toast.error("something went wrong, please try again later");
+      toast.error("Something went wrong, please try again later");
       console.error("Error fetching position:", error);
     } finally {
       setLoading(false);
@@ -597,7 +613,7 @@ export default function SingleProjectPage() {
         </div>
       )}
       {/* heading and keywords table */}
-      <div className="mb-5">
+      <div className="mb-5 p-6 bg-gray-50 min-h-full">
         {projectLoading ? (
           <div className="flex items-center space-x-4">
             <Skeleton className="h-12 w-12 rounded-full" />
@@ -608,56 +624,70 @@ export default function SingleProjectPage() {
           </div>
         ) : (
           <>
-            <h1 className="text-3xl font-bold">{project.name}</h1>
-            <Select onValueChange={handleWebsiteChange}>
-              <SelectTrigger className="w-[400px] h-11 border rounded-md px-4 py-2 text-lg">
-                <SelectValue placeholder="Select a website" />
-              </SelectTrigger>
-              <SelectContent className="text-lg">
-                {websitesData.map((data) => (
-                  <SelectItem
-                    key={data.id}
-                    value={JSON.stringify({
-                      website: data.website,
-                      id: data.id,
-                    })}
-                  >
-                    {data.website}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* <h1 className="text-3xl font-bold">{project.name}</h1> */}
+            <div className="flex justify-between">
+              <h1 className="text-3xl font-bold text-gray-800 mb-6">
+                Keyword Rank Dashboard
+              </h1>
+            </div>
+            <div className="bg-white shadow rounded-lg p-4">
+              <div className="mb-6">
+                <label className="block text-gray-700 font-medium mb-2">
+                  Select a Website:
+                </label>
+                <Select onValueChange={handleWebsiteChange}>
+                  <SelectTrigger className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-md focus:outline-none focus:ring focus:ring-blue-300 transition">
+                    <SelectValue placeholder="Select a website" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-gray-200 rounded-lg shadow-lg text-lg">
+                    {websitesData.map((data) => (
+                      <SelectItem
+                        key={data.id}
+                        value={JSON.stringify({
+                          website: data.website,
+                          id: data.id,
+                        })}
+                        className="px-4 py-2 hover:bg-gray-100 transition cursor-pointer"
+                      >
+                        {data.website}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </>
         )}
 
         {keywordsLoading ? (
           <div className="flex items-center space-x-4 mt-5"></div>
         ) : (
-          <div className="flex justify-between items-center mt-14">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap justify-between items-center mt-14 gap-4">
+            {/* Search and Add Keyword Section */}
+            <div className="flex flex-wrap items-center gap-3">
               <Input
                 type="text"
                 placeholder="Search keywords..."
-                className="w-[400px] p-2 border rounded-md"
+                className="w-[350px] px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-blue-300 transition bg-white"
               />
               <Button
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition"
                 onClick={() => {
                   setIsSidebarOpen(true);
                   setSidebarMode("addKeyword");
                 }}
               >
-                <FaPlus className="mr-2" /> Add New Keyword
+                <FaPlus className="text-white" /> Add New Keyword
               </Button>
             </div>
-            {/* view table button */}
-            <div className="p-4">
+
+            {/* Summary Table Button */}
+            <div className="flex items-center gap-3">
               <Button
-                className="bg-blue-700"
+                className="flex items-center gap-2 bg-gray-700 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-800 transition"
                 onClick={() => setIsModalOpen(true)}
               >
-                <CiViewList />
-                Summary
+                <CiViewList className="text-white" /> Summary
               </Button>
 
               <TableModal
@@ -669,15 +699,15 @@ export default function SingleProjectPage() {
                 </h2>
                 <KeywordTable data={data} />
               </TableModal>
+
+              {/* Check Rank Auto Button */}
+              <Button
+                className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition"
+                onClick={handleAutoRankCheck}
+              >
+                <BsCloudCheck className="text-white" /> Check Rank Auto
+              </Button>
             </div>
-            {/* Add Check Rank Auto Button */}
-            <Button
-              className="flex items-center gap-2 bg-green-600 text-white"
-              onClick={handleAutoRankCheck}
-            >
-              <BsCloudCheck />
-              Check Rank Auto
-            </Button>
           </div>
         )}
 

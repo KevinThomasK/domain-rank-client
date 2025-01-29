@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { IoMdAdd } from "react-icons/io";
+import { Textarea } from "@/components/ui/textarea";
 
 const BacklinksList = () => {
   const [backlinks, setBacklinks] = useState([]);
@@ -49,7 +50,7 @@ const BacklinksList = () => {
 
   useEffect(() => {
     fetchBacklinks();
-  }, []); 
+  }, []);
 
   const handleAddWebsite = () => {
     console.log("first");
@@ -293,19 +294,12 @@ const BacklinksList = () => {
           )}
         </div>{" "}
         <div>
-          <label className="block">Remarks </label>
-          <Input
-            type="text"
+          <label className="block font-bold">Remarks</label>
+          <Textarea
             placeholder="Enter remarks"
-            value={newWebsite}
-            onChange={(e) => setNewWebsite(e.target.value)}
-            className={`mb-2 mt-2 h-[50px] text-lg ${
-              !newWebsite && isSubmitted ? "border-red-500" : ""
-            }`}
+            rows={5}
+            className="mb-2 mt-2 w-full text-lg"
           />
-          {!newWebsite && isSubmitted && (
-            <p className="text-red-500 text-sm">Website url is required.</p>
-          )}
         </div>
         <div className="flex gap-2 mt-5">
           <Button onClick={handleAddWebsite}>Save Backlink</Button>
@@ -354,20 +348,13 @@ const BacklinksList = () => {
           )}
         </div>{" "}
         <div>
-          <label className="block">Remarks </label>
-          <Input
-            type="text"
+          <label className="block font-bold">Remarks</label>
+          <Textarea
             placeholder="Enter remarks"
-            value={remarks}
-            onChange={(e) => setRemarks(e.target.value)}
-            className={`mb-2 mt-2 h-[50px] text-lg ${
-              !newWebsite && isSubmitted ? "border-red-500" : ""
-            }`}
+            rows={5}
+            className="mb-2 mt-2 w-full text-lg"
           />
-          {!newWebsite && isSubmitted && (
-            <p className="text-red-500 text-sm">Website url is required.</p>
-          )}
-        </div>{" "}
+        </div>
         <div className="flex gap-2 mt-5">
           <Button onClick={handleAddBacklinkWebsite}>Save Backlink</Button>
           <Button onClick={() => setIsBSidebarOpen(false)} variant="outline">

@@ -251,10 +251,8 @@ const Page = () => {
     router.push(`/dashboard/site-audit/results/${jobId}`);
   };
 
-  console.log(scrapingJobs, "....scrj");
-
   return (
-    <div>
+    <div className="mb-5 p-6 bg-gray-50 min-h-full">
       <div>
         {projectLoading ? (
           <div className="flex items-center space-x-4">
@@ -266,105 +264,140 @@ const Page = () => {
             </div>
           </div>
         ) : (
-          <div className="flex items-center space-x-4">
-            <h1 className="text-3xl font-bold">{project.name}</h1>
+          <>
+            <div className="flex justify-between">
+              <h1 className="text-3xl font-bold text-gray-800 mb-6">
+                Site Audit Dashboard
+              </h1>
+            </div>
+            <div className="bg-white shadow rounded-lg p-4">
+              <div className="mb-6">
+                <label className="block text-gray-700 font-medium mb-2">
+                  Select a Website:
+                </label>
+                <Select onValueChange={handleWebsiteChange}>
+                  <SelectTrigger className="w-full px-4 py-2 bg-white border rounded-lg shadow-md focus:outline-none focus:ring focus:ring-blue-300">
+                    <SelectValue placeholder="Select a website" />
+                  </SelectTrigger>
+                  <SelectContent className="text-lg">
+                    {websitesData.map((data) => (
+                      <SelectItem
+                        key={data.id}
+                        value={JSON.stringify({
+                          website: data.website,
+                          id: data.id,
+                        })}
+                      >
+                        {data.website}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <Select onValueChange={handleWebsiteChange}>
-              <SelectTrigger className="w-[400px] h-11 border rounded-md px-4 py-2 text-lg">
-                <SelectValue placeholder="Select a website" />
-              </SelectTrigger>
-              <SelectContent className="text-lg">
-                {websitesData.map((data) => (
-                  <SelectItem
-                    key={data.id}
-                    value={JSON.stringify({
-                      website: data.website,
-                      id: data.id,
-                    })}
-                  >
-                    {data.website}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button
-              className="flex items-center bg-blue-600"
-              disabled={!selectedWebsite}
-              onClick={() => startScraping(selectedWebsite, selectedWebsiteId)}
-            >
-              <FaStaylinked className="mr-2" />
-              Start Audit
-            </Button>
-          </div>
+              <div className="mt-4">
+                <Button
+                  className="w-full max-w-60 bg-green-500 px-4 py-2 rounded-lg shadow-md text-white font-medium flex items-center justify-center"
+                  disabled={!selectedWebsite}
+                  onClick={() =>
+                    startScraping(selectedWebsite, selectedWebsiteId)
+                  }
+                >
+                  <FaStaylinked className="mr-2" />
+                  Start Audit
+                </Button>
+              </div>
+            </div>
+          </>
         )}
       </div>
       {responseMessage && <p>{responseMessage}</p>}
+
       <div className="mt-6">
-        <table className="min-w-full table-auto border-collapse">
-          <thead>
-            <tr className="bg-gray-100">
-              {/* <th className="px-4 py-2 text-left">URL</th> */}
-              <th className="px-4 py-2 text-left">Date</th>
-              <th className="px-4 py-2 text-left">Status</th>
-              <th className="px-4 py-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {scrapingJobs
-              .filter((job) => job.url === selectedWebsite) // Filter jobs based on selectedWebsite
-              .map((job) => (
-                <tr key={job.id} className="border-b hover:bg-gray-50">
-                  {/* <td className="px-4 py-2">{job.url}</td> */}
-                  <td className="px-4 py-2 text-md text-gray-600">
-                    {new Date(job.date).toLocaleDateString("en-GB")},{" "}
-                    {new Date(job.date).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </td>
-                  <td className="px-4 py-2">
-                    {job.status === "in-progress" ? (
-                      <span className="text-yellow-500 font-semibold">
-                        In Progress
-                      </span>
-                    ) : job.status === "completed" ? (
-                      <span className="text-green-500 font-semibold">
-                        Completed
-                      </span>
-                    ) : (
-                      <span className="text-red-500 font-semibold">
-                        {job.status}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2">
-                    {job.status === "in-progress" && (
-                      <div className="flex items-center justify-center">
-                        <div className="w-6 h-6 border-4 border-t-4 border-gray-300 border-solid rounded-full animate-spin border-t-blue-600"></div>
-                      </div>
-                    )}
-                    {job.status === "completed" && job.result && (
-                      <div className="flex">
-                        <Button
-                          onClick={() => handleShowResult(job.id)}
-                          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                        >
-                          View Result
-                        </Button>
-                        <Button
-                          onClick={() => copyToClipboard(job.result)}
-                          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mx-3"
-                        >
-                          <IoCopyOutline /> Copy Result
-                        </Button>
-                      </div>
-                    )}
-                  </td>
+        {scrapingJobs.filter((job) => job.url === selectedWebsite).length >
+        0 ? (
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-200 text-gray-700 text-left">
+                  <th className="px-6 py-3 text-sm font-semibold">Date</th>
+                  <th className="px-6 py-3 text-sm font-semibold">Status</th>
+                  <th className="px-6 py-3 text-sm font-semibold">Actions</th>
                 </tr>
-              ))}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {scrapingJobs
+                  .filter((job) => job.url === selectedWebsite)
+                  .map((job) => {
+                    const jobDate = new Date(job.date);
+                    const isValidDate = !isNaN(jobDate);
+                    const displayDate = isValidDate ? jobDate : new Date();
+
+                    return (
+                      <tr
+                        key={job.id}
+                        className="border-b transition hover:bg-gray-50"
+                      >
+                        <td className="px-6 py-3 text-gray-600 text-sm">
+                          {displayDate.toLocaleDateString("en-GB")},{" "}
+                          {displayDate.toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </td>
+                        <td className="px-6 py-3">
+                          {job.status === "in-progress" ? (
+                            <span className="text-yellow-500 font-semibold">
+                              In Progress
+                            </span>
+                          ) : job.status === "completed" ? (
+                            <span className="text-green-500 font-semibold">
+                              Completed
+                            </span>
+                          ) : (
+                            <span className="text-red-500 font-semibold">
+                              {job.status}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-3">
+                          {job.status === "in-progress" && (
+                            <div className="flex items-center">
+                              <div className="w-5 h-5 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                              <span className="ml-2 text-gray-500 text-sm">
+                                Processing...
+                              </span>
+                            </div>
+                          )}
+                          {job.status === "completed" && job.result && (
+                            <div className="flex space-x-3">
+                              <Button
+                                onClick={() => handleShowResult(job.id)}
+                                className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm shadow hover:bg-blue-600"
+                              >
+                                View Result
+                              </Button>
+                              {/* <Button
+                                onClick={() => copyToClipboard(job.result)}
+                                className="bg-green-500 text-white px-4 py-2 rounded-md text-sm shadow hover:bg-green-600 flex items-center"
+                              >
+                                <IoCopyOutline className="mr-1" />
+                                Copy Result
+                              </Button> */}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-gray-500 text-sm text-center">
+            No scraping jobs found for this website.
+          </p>
+        )}
       </div>
     </div>
   );

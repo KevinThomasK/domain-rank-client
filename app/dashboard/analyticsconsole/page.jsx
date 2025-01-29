@@ -65,6 +65,10 @@ const AnalyticsConsole = () => {
     { id: "UsersBySources", label: "Users by Sources" },
     { id: "PageViewReport", label: "Page View Report" },
   ];
+  const [selectedAccount, setSelectedAccount] = useState("");
+  const [selectedDimension, setSelectedDimension] = useState(
+    "sessionDefaultChannelGrouping"
+  );
 
   useEffect(() => {
     // Set default dates when component mounts
@@ -100,7 +104,7 @@ const AnalyticsConsole = () => {
     fetchAccounts();
   }, []);
 
-  const fetchAnalytics = async (account) => {
+  const fetchAnalytics = async (account, dimension) => {
     setIsLoading(true);
     setAnalytics(null);
     setCurrentAccount(account.property_id);
@@ -115,6 +119,7 @@ const AnalyticsConsole = () => {
             propertyId: account.property_id,
             startDate: startDate || "7daysAgo",
             endDate: endDate || "today",
+            dimension: dimension,
           }),
         }
       );
@@ -219,6 +224,12 @@ const AnalyticsConsole = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDimensionChange = (event) => {
+    const newDimension = event.target.value; // Get the updated dimension value
+    setSelectedDimension(newDimension); // Update the state
+    fetchAnalytics(selectedAccount, newDimension); // Pass the updated dimension directly
   };
 
   // Sort trafficData by date
@@ -341,7 +352,8 @@ const AnalyticsConsole = () => {
                 (acc) => acc.property_id === site
               );
               if (selectedAccount) {
-                fetchAnalytics(selectedAccount);
+                setSelectedAccount(selectedAccount);
+                fetchAnalytics(selectedAccount, selectedDimension);
                 fetchPageAnalytics(selectedAccount);
               }
             }}
@@ -350,7 +362,7 @@ const AnalyticsConsole = () => {
           </Button>
         </div>
       </div>
-      <div className="flex justify-between mt-5">
+      <div className="flex  mt-5">
         <div className="w-1/6 pr-4 ">
           <div className="flex flex-col space-y-2 mt-6">
             {tabs.map((tab) => (
@@ -370,13 +382,12 @@ const AnalyticsConsole = () => {
         </div>
 
         {activeTab === "TrafficBySources" && (
-          <div className="mt-6 w-5/6 bg-white shadow rounded-lg p-6">
+          <div className="p-6 w-5/6 bg-white shadow rounded-lg mt-6">
             {isLoading ? (
-              <div className="flex">
+              <div className="flex items-center justify-center">
                 <p className="text-gray-600 text-lg font-medium">
                   Loading Analytics...
                 </p>
-
                 <svg
                   className="animate-spin h-5 w-5 ml-2 text-gray-600"
                   xmlns="http://www.w3.org/2000/svg"
@@ -399,67 +410,95 @@ const AnalyticsConsole = () => {
                 </svg>
               </div>
             ) : analytics && analytics.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="table-auto w-full max-w-full border-collapse border border-gray-300 rounded-md shadow-sm">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-6 py-2 text-left font-semibold text-gray-700 border-b">
-                        Channel
-                      </th>
-                      <th className="px-6 py-2 text-left font-semibold text-gray-700 border-b">
-                        Active Users
-                      </th>
-                      <th className="px-6 py-2 text-left font-semibold text-gray-700 border-b">
-                        Event Count
-                      </th>
-                      <th className="px-6 py-2 text-left font-semibold text-gray-700 border-b">
-                        New Users
-                      </th>
-                      <th className="px-6 py-2 text-left font-semibold text-gray-700 border-b">
-                        Sessions
-                      </th>
-                      <th className="px-6 py-2 text-left font-semibold text-gray-700 border-b">
-                        Engaged Sessions
-                      </th>
-                      <th className="px-6 py-2 text-left font-semibold text-gray-700 border-b">
-                        Bounce Rate
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {analytics.map((item, index) => (
-                      <tr
-                        key={index}
-                        className={`${
-                          index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                        } hover:bg-gray-100 transition`}
-                      >
-                        <td className="px-6 py-4 text-gray-700 border-b">
-                          {item.channel}
-                        </td>
-                        <td className="px-6 py-4 text-gray-700 border-b">
-                          {item.activeUsers}
-                        </td>
-                        <td className="px-6 py-4 text-gray-700 border-b">
-                          {item.eventCount}
-                        </td>
-                        <td className="px-6 py-4 text-gray-700 border-b">
-                          {item.newUsers}
-                        </td>
-                        <td className="px-6 py-4 text-gray-700 border-b">
-                          {item.sessions}
-                        </td>
-                        <td className="px-6 py-4 text-gray-700 border-b">
-                          {item.engagedSessions}
-                        </td>
-                        <td className="px-6 py-4 text-gray-700 border-b">
-                          {parseFloat(item.bounceRate).toFixed(2)}
-                        </td>
+              <>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Select Dimension:
+                  </label>
+                  <select
+                    value={selectedDimension}
+                    onChange={handleDimensionChange}
+                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
+                  >
+                    <option value="sessionDefaultChannelGrouping">
+                      Channel Grouping
+                    </option>
+                    <option value="sessionSource">Source</option>
+                    <option value="sessionMedium">Medium</option>
+                    <option value="city">City</option>
+                    <option value="deviceCategory">Device Category</option>
+                    <option value="country">Country</option>
+                    <option value="region">Region</option>
+                    <option value="operatingSystem">Operating System</option>
+                    <option value="language">Language</option>
+                    <option value="browser">Browser</option>
+                    <option value="userAgeBracket">Age Bracket</option>
+                    <option value="userGender">Gender</option>
+                  </select>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="table-auto w-full max-w-full border-collapse border border-gray-300 rounded-md shadow-sm">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-6 py-2 text-left font-semibold text-gray-700 border-b capitalize">
+                          {selectedDimension.replace(/([A-Z])/g, " $1").trim()}{" "}
+                          {/* Format dimension name */}
+                        </th>
+                        <th className="px-6 py-2 text-left font-semibold text-gray-700 border-b">
+                          Active Users
+                        </th>
+                        <th className="px-6 py-2 text-left font-semibold text-gray-700 border-b">
+                          Event Count
+                        </th>
+                        <th className="px-6 py-2 text-left font-semibold text-gray-700 border-b">
+                          New Users
+                        </th>
+                        <th className="px-6 py-2 text-left font-semibold text-gray-700 border-b">
+                          Sessions
+                        </th>
+                        <th className="px-6 py-2 text-left font-semibold text-gray-700 border-b">
+                          Engaged Sessions
+                        </th>
+                        <th className="px-6 py-2 text-left font-semibold text-gray-700 border-b">
+                          Bounce Rate
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {analytics.map((item, index) => (
+                        <tr
+                          key={index}
+                          className={`${
+                            index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                          } hover:bg-gray-100 transition`}
+                        >
+                          <td className="px-6 py-4 text-gray-700 border-b">
+                            {item.dimension}
+                          </td>
+                          <td className="px-6 py-4 text-gray-700 border-b">
+                            {item.activeUsers}
+                          </td>
+                          <td className="px-6 py-4 text-gray-700 border-b">
+                            {item.eventCount}
+                          </td>
+                          <td className="px-6 py-4 text-gray-700 border-b">
+                            {item.newUsers}
+                          </td>
+                          <td className="px-6 py-4 text-gray-700 border-b">
+                            {item.sessions}
+                          </td>
+                          <td className="px-6 py-4 text-gray-700 border-b">
+                            {item.engagedSessions}
+                          </td>
+                          <td className="px-6 py-4 text-gray-700 border-b">
+                            {parseFloat(item.bounceRate).toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             ) : (
               <p className="text-gray-500">No analytics data to display.</p>
             )}
