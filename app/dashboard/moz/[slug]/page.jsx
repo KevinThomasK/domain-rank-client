@@ -307,7 +307,7 @@ const MozAnalysis = () => {
         </div>
       )}
 
-      <div className="text-center mb-6">
+      {/* <div className="text-center mb-6">
         <Button
           className="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-6 py-2 rounded-lg shadow-md hover:from-blue-600 hover:to-blue-800 focus:ring-4 focus:ring-blue-300"
           onClick={fetchMozDataForWebsites}
@@ -315,7 +315,7 @@ const MozAnalysis = () => {
         >
           {websitesLoading ? "Loading websites..." : "Fetch MOZ Data"}
         </Button>
-      </div>
+      </div> */}
 
       {mozResults.length > 0 && (
         <div className="overflow-x-auto shadow-md rounded-lg border border-gray-200">
