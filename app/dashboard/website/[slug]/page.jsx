@@ -192,23 +192,7 @@ const ProjectWebsitePage = () => {
   };
 
   return (
-    <div>
-      {projectLoading ? (
-        <div className="flex items-center space-x-4">
-          <Skeleton className="h-12 w-12 rounded-full" />
-
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-[450px]" />
-
-            <Skeleton className="h-4 w-[400px]" />
-          </div>
-        </div>
-      ) : (
-        <>
-          <h1 className="text-3xl font-bold">{project.name}</h1>
-        </>
-      )}
-
+    <div className="bg-white p-6 rounded-lg">
       <div className="flex justify-between items-center mt-14 mb-10">
         <div className="flex items-center gap-2">
           <Input
@@ -224,49 +208,51 @@ const ProjectWebsitePage = () => {
           </Button>
         </div>
       </div>
+      <div className="bg-white shadow rounded-lg p-4">
+        <table className="min-w-full table-auto border-collapse text-left">
+          <thead>
+            <tr>
+              <th className="px-4 py-2 border w-1/2 text-left">Website </th>
+              <th className="px-4 py-2 border">Ownership </th>
+              <th className="px-4 py-2 border">Website </th>
+              <th className="px-4 py-2 border">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {websitesData.length > 0 ? (
+              websitesData.map((data, index) => (
+                <tr key={index} className="odd:bg-gray-100 text-left">
+                  <td className="px-4 py-2 border text-left text-blue-600">
+                    {data.website}
+                  </td>
+                  <td className="px-4 py-2 border">{data.ownership_type}</td>
+                  <td className="px-4 py-2 border">{data.website_type}</td>
 
-      <table className="min-w-full table-auto border-collapse text-left">
-        <thead>
-          <tr>
-            <th className="px-4 py-2 border w-1/2 text-left">Website </th>
-            <th className="px-4 py-2 border">Ownership </th>
-            <th className="px-4 py-2 border">Website </th>
-            <th className="px-4 py-2 border">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {websitesData.length > 0 ? (
-            websitesData.map((data, index) => (
-              <tr key={index} className="odd:bg-gray-100 text-left">
-                <td className="px-4 py-2 border text-left text-blue-600">
-                  {data.website}
-                </td>
-                <td className="px-4 py-2 border">{data.ownership_type}</td>
-                <td className="px-4 py-2 border">{data.website_type}</td>
-
-                <td className="px-4 py-2 border">
-                  {" "}
-                  <Button
-                    onClick={() => toggleStatus(index)}
-                    className={`py-2 px-3 text-sm rounded-md text-white ${
-                      data.status === "Active" ? "bg-green-600" : "bg-gray-500"
-                    }`}
-                  >
-                    {data.status}
-                  </Button>
+                  <td className="px-4 py-2 border">
+                    {" "}
+                    <Button
+                      onClick={() => toggleStatus(index)}
+                      className={`py-2 px-3 text-sm rounded-md text-white ${
+                        data.status === "Active"
+                          ? "bg-green-600"
+                          : "bg-gray-500"
+                      }`}
+                    >
+                      {data.status}
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="text-center py-2">
+                  No websites found
                 </td>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="5" className="text-center py-2">
-                No websites found
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-
+            )}
+          </tbody>
+        </table>
+      </div>
       {/* sidebar */}
       <div
         className={`fixed top-0 right-0 bottom-0 w-[700px] bg-white shadow-lg p-5 flex flex-col gap-4 z-50 transform transition-all duration-300 ${

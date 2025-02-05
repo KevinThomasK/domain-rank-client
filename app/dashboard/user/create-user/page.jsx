@@ -222,7 +222,7 @@ export default function UserManagement() {
 
   return (
     <main>
-      <div className="max-w-9xl mx-auto mt-12 p-6 bg-white shadow-lg rounded-lg border border-gray-200">
+      <div className="max-w-9xl mx-auto mt-12 py-10 px-20 bg-white shadow-lg rounded-lg border border-gray-200">
         <h1 className="text-3xl font-bold mb-8 text-gray-800 text-center">
           Create User
         </h1>
@@ -316,7 +316,7 @@ export default function UserManagement() {
         ) : error ? (
           <p className="text-red-500">{error}</p>
         ) : (
-          <table className="w-full border-collapse border">
+          <table className="w-full border-collapse border p-6 bg-white rounded-lg">
             <thead>
               <tr>
                 <th className="border px-4 py-2 text-left">Name</th>
@@ -419,7 +419,7 @@ export default function UserManagement() {
         onConfirm={handleDeleteUser}
         title="Delete User"
       >
-        <p>Are you sure you want to delete "{currentUser?.name}"?</p>
+        <p>{`Are you sure you want to delete "${currentUser?.name}"?`}</p>
       </Modal>
 
       {/* Assign Project Modal */}

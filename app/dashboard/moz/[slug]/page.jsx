@@ -26,6 +26,7 @@ const MozAnalysis = () => {
   const [selectedWebsite, setSelectedWebsite] = useState("");
   const [selectedWebsiteId, setSelectedWebsiteId] = useState("");
   const [mozResults, setMozResults] = useState([]);
+  const [dataSource, setDataSource] = useState("");
 
   const handleFetchData = async () => {
     if (!selectedWebsite) {
@@ -36,25 +37,47 @@ const MozAnalysis = () => {
     setLoading(true);
     setError("");
     setSummaryData(null);
+    setDataSource(""); // Reset source on new request
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/fetchMozData`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ url: selectedWebsite }),
-        }
+      // Check if data exists in the database first
+      const checkResponse = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_BACKEND_URL
+        }/api/checkMozData?url=${encodeURIComponent(selectedWebsite)}`
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch MOZ data");
+      if (!checkResponse.ok) {
+        throw new Error("Failed to check database for existing data");
       }
 
-      const data = await response.json();
-      setSummaryData(data.mozData);
+      const checkData = await checkResponse.json();
+
+      if (checkData.exists) {
+        // If data exists, use it from the database
+        setSummaryData(checkData.mozData);
+        setDataSource("Database ✅"); // Set source as database
+      } else {
+        // If not, fetch new data from the API
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/fetchMozData`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ url: selectedWebsite }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch MOZ data");
+        }
+
+        const data = await response.json();
+        setSummaryData(data.mozData);
+        setDataSource("API 🌍"); // Set source as API
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -198,6 +221,9 @@ const MozAnalysis = () => {
 
       {summaryData && (
         <div className="mt-8 bg-white border border-gray-300 rounded-lg shadow-lg p-8">
+          <div className="mt-4 text-gray-600 text-sm">
+            <strong>Data Source:</strong> {dataSource}
+          </div>
           {/* Header */}
           <h3 className="text-xl font-bold text-gray-800 mb-6">
             Analysis Results for:{" "}

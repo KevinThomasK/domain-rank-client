@@ -189,7 +189,9 @@ const MonitoredWebsites = () => {
       </div>
 
       {loading ? (
-        <p>Loading...</p>
+        <div class="flex items-center justify-center ">
+          <div class="w-12 h-12 border-4 border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+        </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white border border-gray-300 rounded-lg shadow">

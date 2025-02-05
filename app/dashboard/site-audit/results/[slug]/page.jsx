@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import axios from "axios";
 import { CiViewList } from "react-icons/ci";
 import { Button } from "@/components/ui/button";
+import { toast } from "react-toastify";
 
 const ResultPage = () => {
   const { slug } = useParams();
@@ -84,19 +85,51 @@ const ResultPage = () => {
     setSelectedMetadata(matchingPage || null); // Update selected metadata
   };
 
-  console.log(selectedMetadata, "selected");
+  // Copy function
+  const copyAllUniqueLinks = (uniqueLinks) => {
+    if (!uniqueLinks || uniqueLinks.length === 0) {
+      toast("No URL's available to copy", {
+        theme: "colored",
+      });
+      return;
+    }
+
+    const urls = uniqueLinks.join("\n");
+
+    navigator.clipboard
+      .writeText(urls)
+      .then(() =>
+        toast("All URLs copied!", {
+          theme: "colored",
+        })
+      )
+      .catch(() => toast.error("Failed to copy."));
+  };
 
   return (
     <>
-      <div className="flex justify-between bg-gray-50 p-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">
+      <div className="flex items-center  bg-gray-50">
+        <h1 className="text-3xl font-bold text-gray-800 mb-6 mr-16">
           Site Audit Result
         </h1>
+        <div className="sticky top-0 z-20 border-gray-200">
+          <h1 className="font-bold text-gray-900 text-2xl">
+            <a
+              href={job.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-black text-2xl hover:text-indigo-800 transition-colors duration-300 decoration-indigo-500"
+            >
+              {job.url}
+            </a>
+          </h1>
+        </div>
       </div>
-      <div className="flex bg-gray-50 p-6 min-h-full">
+      <div className="flex bg-gray-50 min-h-full">
         {/* Sidebar */}
-        <div className="w-1/6 max-w-[350px] mr-6  h-screen sticky top-0">
-          <ul className="flex flex-col space-y-2">
+
+        <div className="w-1/6 max-w-[350px]  h-screen sticky top-0 pr-8">
+          <ul className="flex flex-col space-y-4">
             {[
               { id: "uniqueLinks", label: "Pages" },
               { id: "uniqueImages", label: "Images" },
@@ -122,22 +155,22 @@ const ResultPage = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto ml-4 w-5/6">
-          <div className="sticky top-0 bg-white z-10 border-b-2 border-gray-300 pb-2 mb-6 ">
-            <h1 className="font-semibold text-gray-900 p-6">
-              <a
-                href={job.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-indigo-600 text-3xl hover:text-indigo-800 transition-colors duration-300"
-              >
-                {job.url}
-              </a>
-            </h1>
-          </div>
-
+        <div className="flex-1 overflow-y-auto w-5/6">
           {activeMenu === "uniqueLinks" && (
             <div className="bg-white shadow-lg rounded-xl p-6">
+              {/* Copy Button */}
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Unique Links
+                </h2>
+                <button
+                  onClick={() => copyAllUniqueLinks(job.result.uniqueLinks)}
+                  className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium shadow-md"
+                >
+                  Copy All URLs
+                </button>
+              </div>
+
               <ol className="list-decimal pl-6 space-y-5">
                 {job.result.uniqueLinks?.map((link, index) => (
                   <li
@@ -229,8 +262,7 @@ const ResultPage = () => {
           )}
 
           {activeMenu === "uniqueImages" && (
-            <div>
-              <h2 className="text-xl font-bold mb-4"> Images</h2>
+            <div className="p-8 bg-white rounded-lg">
               <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
                 {job?.result?.uniqueImages?.map((image, index) => (
                   <div
@@ -269,7 +301,7 @@ const ResultPage = () => {
                 <img
                   src={selectedImage.url}
                   alt={`Image Details`}
-                  className="w-full h-auto rounded-md  max-h-[500px] object-contain"
+                  className="w-full h-auto rounded-md  max-h-[380px] object-contain"
                 />
                 <p className="mt-10">
                   <strong>Alt Text:</strong>{" "}
@@ -301,9 +333,6 @@ const ResultPage = () => {
           )}
           {activeMenu === "pages" && (
             <div>
-              <h2 className="text-2xl font-bold mb-6 text-gray-900">
-                Meta Data
-              </h2>
               <ul className="space-y-6">
                 {job.result.pages?.map((page, index) => (
                   <li
@@ -382,8 +411,7 @@ const ResultPage = () => {
           )}
 
           {activeMenu === "errors" && (
-            <div>
-              <h2 className="text-xl font-bold mb-4">Broken Links</h2>
+            <div className="p-4 bg-white rounded-lg min-h-screen">
               <div className="overflow-x-auto">
                 <table className="min-w-full table-auto border-collapse border border-gray-300">
                   <thead>
@@ -459,10 +487,7 @@ const ResultPage = () => {
           )}
 
           {activeMenu === "directories" && (
-            <>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-                Directories
-              </h2>
+            <div className="p-8 bg-white min-h-screen rounded-lg">
               <ul className="space-y-3">
                 {directories.map((directory, index) => (
                   <li
@@ -480,73 +505,72 @@ const ResultPage = () => {
                   </li>
                 ))}
               </ul>
-            </>
+            </div>
           )}
           {activeMenu === "image-details" && (
-            <>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Image Details
-              </h2>
-              <table className="w-full table-auto border-collapse border border-gray-300 text-sm">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-2 py-1 border-b text-left text-gray-700 font-bold">
-                      Preview
-                    </th>
-                    <th className="px-2 py-1 border-b text-left text-gray-700 font-bold">
-                      Alt Text
-                    </th>
-                    <th className="px-2 py-1 border-b text-left text-gray-700 font-bold">
-                      Width (px)
-                    </th>
-                    <th className="px-2 py-1 border-b text-left text-gray-700 font-bold">
-                      Height (px)
-                    </th>
-                    <th className="px-2 py-1 border-b text-left text-gray-700 font-bold">
-                      Size
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {job.result.uniqueImages.map((image, index) => (
-                    <tr
-                      key={index}
-                      className="hover:bg-indigo-50 transition duration-300 ease-in-out cursor-pointer"
-                      onClick={() => handleImageClick(image)} // Open modal on row click
-                    >
-                      {/* Image preview */}
-                      <td className="px-2 py-1 border-b">
-                        <img
-                          src={image.url}
-                          alt={image.altText || "No Alt Text"}
-                          className="w-12 h-12 object-contain rounded-md border border-gray-200"
-                        />
-                      </td>
-                      {/* Alt Text */}
-                      <td className="px-2 py-1 border-b text-gray-800">
-                        {image.altText || (
-                          <span className="text-gray-500">No Alt Text</span>
-                        )}
-                      </td>
-                      {/* Width */}
-                      <td className="px-2 py-1 border-b text-gray-800">
-                        {image.width || "Unknown"}
-                      </td>
-                      {/* Height */}
-                      <td className="px-2 py-1 border-b text-gray-800">
-                        {image.height || "Unknown"}
-                      </td>
-                      {/* Size */}
-                      <td className="px-2 py-1 border-b text-gray-800">
-                        {image.sizeInKB
-                          ? `${image.sizeInKB} KB (${image.sizeInMB} MB)`
-                          : "Unknown"}
-                      </td>
+            <div className="p-8 bg-white rounded-lg">
+              <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+                <table className="w-full table-auto border-collapse text-sm">
+                  <thead className="bg-gray-200 text-gray-700 uppercase">
+                    <tr>
+                      <th className="px-4 py-2 border-b text-left font-semibold">
+                        Preview
+                      </th>
+                      <th className="px-4 py-2 border-b text-left font-semibold">
+                        Alt Text
+                      </th>
+                      <th className="px-4 py-2 border-b text-left font-semibold">
+                        Width (px)
+                      </th>
+                      <th className="px-4 py-2 border-b text-left font-semibold">
+                        Height (px)
+                      </th>
+                      <th className="px-4 py-2 border-b text-left font-semibold">
+                        Size
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
+                  </thead>
+                  <tbody>
+                    {job.result.uniqueImages.map((image, index) => (
+                      <tr
+                        key={index}
+                        className="hover:bg-indigo-50 transition duration-300 ease-in-out cursor-pointer border-b"
+                        onClick={() => handleImageClick(image)}
+                      >
+                        {/* Image preview */}
+                        <td className="px-4 py-2">
+                          <img
+                            src={image.url}
+                            alt={image.altText || "No Alt Text"}
+                            className="w-14 h-14 object-contain rounded-md border border-gray-300 shadow-sm"
+                          />
+                        </td>
+                        {/* Alt Text */}
+                        <td className="px-4 py-2 text-gray-800">
+                          {image.altText || (
+                            <span className="text-gray-500">No Alt Text</span>
+                          )}
+                        </td>
+                        {/* Width */}
+                        <td className="px-4 py-2 text-gray-800">
+                          {image.width || "Unknown"}
+                        </td>
+                        {/* Height */}
+                        <td className="px-4 py-2 text-gray-800">
+                          {image.height || "Unknown"}
+                        </td>
+                        {/* Size */}
+                        <td className="px-4 py-2 text-gray-800">
+                          {image.sizeInKB
+                            ? `${image.sizeInKB} KB (${image.sizeInMB} MB)`
+                            : "Unknown"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           )}
         </div>
       </div>

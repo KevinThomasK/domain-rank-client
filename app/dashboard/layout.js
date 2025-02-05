@@ -148,8 +148,6 @@ export default function DashboardPage({ children }) {
     }
   };
 
-  console.log("Current segment:", segment);
-
   const dropdownFilteredProjects = projects.filter(
     (project) =>
       project.name &&
@@ -172,7 +170,11 @@ export default function DashboardPage({ children }) {
   }, [selectedProject]);
 
   if (status === "loading") {
-    return <div>Loading...</div>;
+    return (
+      <div class="flex items-center justify-center h-screen">
+        <div class="w-12 h-12 border-4 border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
   }
 
   if (status === "unauthenticated") {
@@ -180,9 +182,8 @@ export default function DashboardPage({ children }) {
   }
 
   return (
-    <>
-      <header className="flex justify-between items-center pb-6 pt-6 pr-10 pl-10 bg-gray-100 sticky top-0 border border-b-slate-300 bg-white z-10">
-        {/* Left: SEO AUDITOR Heading */}
+    <div className="overflow-hidden h-screen">
+      <header className="flex justify-between items-center pb-6 pt-6 pr-10 pl-10 bg-gray-50 sticky top-0 border border-b-slate-300 z-10">
         <Link
           href="/dashboard"
           className="text-3xl font-bold flex-1 text-gray-700"
@@ -322,7 +323,7 @@ export default function DashboardPage({ children }) {
       {/* Main Content Layout */}
       <div className="flex h-[calc(100vh-96px)]">
         {/* Sidebar */}
-        <aside className="w-64 bg-gray-100 border-r border-slate-300  flex flex-col sticky top-[96px]">
+        <aside className="w-64  border-r border-slate-300  flex flex-col sticky top-[96px]">
           <nav className="space-y-2">
             {/* Websites Link */}
             {selectedProject ? (
@@ -550,21 +551,32 @@ export default function DashboardPage({ children }) {
             )}
 
             {/* Domain Age Link */}
-            <Link
-              className={`flex items-center gap-3 text-lg p-2 pl-6 rounded-md ${
-                segment === "domain-age"
-                  ? "bg-blue-100 text-[#1E40AF] "
-                  : "text-gray-700 hover:text-black"
-              }`}
-              href={`/dashboard/domain-age`}
-            >
-              <MdDomain
-                className={`text-xl ${
-                  segment === "domain-age" ? "text-[#2563EB]" : "text-gray-500"
+            {selectedProject ? (
+              <Link
+                className={`flex items-center gap-3 text-lg p-2 pl-6 rounded-md ${
+                  segment === "domain-age"
+                    ? "bg-blue-100 text-[#1E40AF]"
+                    : "text-gray-700 hover:text-black"
                 }`}
-              />
-              Domain Age
-            </Link>
+                href={`/dashboard/domain-age/${selectedProject.id}`}
+              >
+                <MdDomain
+                  className={`text-xl ${
+                    segment === "domain-age"
+                      ? "text-[#2563EB]"
+                      : "text-gray-500"
+                  }`}
+                />
+                Domain Age
+              </Link>
+            ) : (
+              <span
+                className="flex items-center gap-3 text-lg text-gray-400 cursor-not-allowed p-2"
+                title="Select a project to enable this link"
+              >
+                <MdDomain className="text-xl text-gray-400" /> Domain Age
+              </span>
+            )}
 
             {/* DNS Checker Link */}
             <Link
@@ -586,8 +598,10 @@ export default function DashboardPage({ children }) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-10 overflow-y-auto">{children}</main>
+        <main className="flex-1 py-10 px-12 bg-gray-50 overflow-y-auto">
+          {children}
+        </main>
       </div>
-    </>
+    </div>
   );
 }

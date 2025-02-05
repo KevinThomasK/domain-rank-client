@@ -31,6 +31,7 @@ export default function SingleProjectPage() {
   const [ranks, setRanks] = useState("");
   const [data, setData] = useState("");
   const [selectedSearchEngine, setSelectedSearchEngine] = useState("Google");
+  const [selectedSearchLocation, setSelectedSearchLocation] = useState("India");
   const [position, setPosition] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchPositionData, setSearchPositionData] = useState([]);
@@ -48,6 +49,26 @@ export default function SingleProjectPage() {
   const [history, setHistory] = useState([]);
   const [sidebarMode, setSidebarMode] = useState("addKeyword");
   const [selectedKeyword, setSelectedKeyword] = useState("");
+
+  const locationsList = [
+    { name: "India", code: "IN" },
+    { name: "United States", code: "US" },
+    { name: "Australia", code: "AU" },
+    { name: "United Kingdom", code: "GB" },
+    { name: "Canada", code: "CA" },
+    { name: "Germany", code: "DE" },
+    { name: "France", code: "FR" },
+    { name: "Brazil", code: "BR" },
+    { name: "Japan", code: "JP" },
+    { name: "Mexico", code: "MX" },
+    { name: "Russia", code: "RU" },
+    { name: "China", code: "CN" },
+    { name: "Spain", code: "ES" },
+    { name: "Italy", code: "IT" },
+    { name: "South Korea", code: "KR" },
+    { name: "United Arab Emirates", code: "AE" },
+    { name: "South Africa", code: "ZA" },
+  ];
 
   //update website state while select website
   const handleWebsiteChange = (value) => {
@@ -231,7 +252,7 @@ export default function SingleProjectPage() {
     url,
     keyword,
     device = "desktop",
-    location = "us"
+    location
   ) => {
     console.log(`Checking keyword position for: ${keyword}`);
     console.log(`Device: ${device}, Location: ${location}`);
@@ -269,11 +290,12 @@ export default function SingleProjectPage() {
   };
 
   // Use the updated function in handleSearchPosition
-  const handleSearchPosition = async (index, device, location) => {
+  const handleSearchPosition = async (index, device) => {
     setLoading(true);
     setPosition(null);
     const url = selectedWebsite;
     const keyword = keywordsData[index].keyword;
+    const location = keywordsData[index].search_location;
 
     try {
       const resultPosition = await fetchKeywordPosition(
@@ -393,12 +415,13 @@ export default function SingleProjectPage() {
       project_id: slug,
       keyword: newKeyword,
       search_engine: selectedSearchEngine,
-      search_location: "Default Location",
+      search_location: selectedSearchLocation || "IN", // Store country code, default to India
       status: "Active",
     };
+
     setIsSubmitted(true);
 
-    if (!newKeyword || !selectedSearchEngine) {
+    if (!newKeyword || !selectedSearchEngine || !selectedSearchLocation) {
       return;
     }
 
@@ -416,7 +439,7 @@ export default function SingleProjectPage() {
       );
 
       const result = await response.json();
-      //console.log(result, "result");
+
       if (response.ok) {
         setKeywordsData((prev) => [
           ...prev,
@@ -424,20 +447,22 @@ export default function SingleProjectPage() {
             id: result.keyword.id,
             keyword: result.keyword.keyword,
             search_engine: newKeywordData.search_engine,
+            search_location: newKeywordData.search_location, // Save as country code
             status: result.keyword.status,
           },
         ]);
         setIsSidebarOpen(false);
         setNewKeyword("");
         setSelectedSearchEngine("Google");
+        setSelectedSearchLocation("IN"); // Reset to default
         setIsSubmitted(false);
         toast.success("Keyword added");
       } else {
-        toast.error("something went wrong");
+        toast.error("Something went wrong");
         console.error("Error creating keyword:", result.error);
       }
     } catch (error) {
-      toast.error("something went wrong");
+      toast.error("Something went wrong");
       console.error("Failed to add keyword:", error);
     }
   };
@@ -722,143 +747,153 @@ export default function SingleProjectPage() {
               </div>
             </div>
           ) : (
-            <table className="min-w-full table-auto border-collapse">
-              <thead>
-                <tr>
-                  <th className="px-4 py-2 border w-1/3 text-left">Keyword</th>
-                  <th className="px-4 py-2 border">Search Engine</th>
-                  <th className="px-4 py-2 border">Rank (Auto Check)</th>
-                  <th className="px-4 py-2 border">Rank (Manual Check)</th>
-                  <th className="px-4 py-2 border">Actions</th>
-                  <th className="px-4 py-2 border">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ranks?.data?.length > 0 ? (
-                  ranks.data.map((data, index) => (
-                    <tr key={index} className="odd:bg-gray-100 text-center">
-                      <td className="px-4 py-2 border text-left">
-                        {data.keyword || "N/A"}
-                      </td>
-                      <td className="px-4 py-2 border">
-                        {data.search_engine || "N/A"}
-                      </td>
-                      <td className="px-4 py-2 border">
-                        {data.latest_auto_search_rank === -1
-                          ? "Not Found"
-                          : data.latest_auto_search_rank !== null
-                          ? data.latest_auto_search_rank
-                          : "N/A"}
-                      </td>
-
-                      <td className="px-4 py-2 border">
-                        {data.latest_manual_check_rank !== null
-                          ? data.latest_manual_check_rank
-                          : "N/A"}
-                      </td>
-                      <td className="px-4 py-2 border flex justify-center gap-2">
-                        <Button
-                          className="text-white"
-                          onClick={() => handleSearchPosition(index)}
-                          disabled={
-                            loading || data.keyword_status === "Inactive"
-                          }
-                        >
-                          {loading ? (
-                            <FaSync className="animate-spin" />
-                          ) : (
-                            "Check"
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="text-blue-600"
-                          onClick={() => handleHistory(index)}
-                        >
-                          <FaHistory />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          className="text-white"
-                          onClick={() => handleDelete(index)}
-                        >
-                          <TfiTrash />
-                        </Button>
-                      </td>
-                      <td className="px-2 py-2 border">
-                        <Button
-                          onClick={() => toggleStatus(index)}
-                          className={`py-2 px-3 text-sm rounded-md text-white ${
-                            data.keyword_status === "Active"
-                              ? "bg-green-600"
-                              : "bg-gray-500"
-                          }`}
-                        >
-                          {data.keyword_status}
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                ) : keywordsData.length > 0 ? (
-                  keywordsData.map((data, index) => (
-                    <tr key={index} className="odd:bg-gray-100 text-center">
-                      <td className="px-4 py-2 border text-left">
-                        {data.keyword}
-                      </td>
-                      <td className="px-4 py-2 border">{data.search_engine}</td>
-                      <td className="px-4 py-2 border">{"N/A"}</td>
-                      <td className="px-4 py-2 border">{"N/A"}</td>
-                      <td className="px-4 py-2 border flex justify-center gap-2">
-                        <Button
-                          className="text-white"
-                          disabled={true}
-                          onClick={() => handleSearchPosition(index)}
-                        >
-                          {loading ? (
-                            <FaSync className="animate-spin" />
-                          ) : (
-                            "Check"
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="text-blue-600"
-                          onClick={() => handleHistory(index)}
-                          disabled={true}
-                        >
-                          <FaHistory />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          className="text-white"
-                          onClick={() => handleDelete(index)}
-                        >
-                          <TfiTrash />
-                        </Button>
-                      </td>
-                      <td className="px-2 py-2 border">
-                        <Button
-                          onClick={() => toggleStatus(index)}
-                          className={`py-2 px-3 text-sm rounded-md text-white ${
-                            data.status === "Active"
-                              ? "bg-green-600"
-                              : "bg-gray-500"
-                          }`}
-                        >
-                          {data.status}
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
+            <div className="bg-white shadow rounded-lg p-4">
+              <table className="min-w-full table-auto border-collapse">
+                <thead>
                   <tr>
-                    <td colSpan="6" className="text-center py-2">
-                      No keywords found
-                    </td>
+                    <th className="px-4 py-2 border w-1/3 text-left">
+                      Keyword
+                    </th>
+                    <th className="px-4 py-2 border">Search Engine</th>
+                    <th className="px-4 py-2 border">Search Location</th>
+                    <th className="px-4 py-2 border">Rank (Auto Check)</th>
+                    <th className="px-4 py-2 border">Rank (Manual Check)</th>
+                    <th className="px-4 py-2 border">Actions</th>
+                    <th className="px-4 py-2 border">Status</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {ranks?.data?.length > 0 ? (
+                    ranks.data.map((data, index) => (
+                      <tr key={index} className="odd:bg-gray-100 text-center">
+                        <td className="px-4 py-2 border text-left">
+                          {data.keyword || "N/A"}
+                        </td>
+                        <td className="px-4 py-2 border">
+                          {data.search_engine || "N/A"}
+                        </td>
+                        <td className="px-4 py-2 border">
+                          {data.search_location || "N/A"}
+                        </td>
+                        <td className="px-4 py-2 border">
+                          {data.latest_auto_search_rank === -1
+                            ? "Not Found"
+                            : data.latest_auto_search_rank !== null
+                            ? data.latest_auto_search_rank
+                            : "N/A"}
+                        </td>
+
+                        <td className="px-4 py-2 border">
+                          {data.latest_manual_check_rank !== null
+                            ? data.latest_manual_check_rank
+                            : "N/A"}
+                        </td>
+                        <td className="px-4 py-2 border flex justify-center gap-2">
+                          <Button
+                            className="text-white bg-indigo-600"
+                            onClick={() => handleSearchPosition(index)}
+                            disabled={
+                              loading || data.keyword_status === "Inactive"
+                            }
+                          >
+                            {loading ? (
+                              <FaSync className="animate-spin" />
+                            ) : (
+                              "Check"
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="text-blue-600"
+                            onClick={() => handleHistory(index)}
+                          >
+                            <FaHistory />
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            className="text-white"
+                            onClick={() => handleDelete(index)}
+                          >
+                            <TfiTrash />
+                          </Button>
+                        </td>
+                        <td className="px-2 py-2 border">
+                          <Button
+                            onClick={() => toggleStatus(index)}
+                            className={`py-2 px-3 text-sm rounded-md text-white ${
+                              data.keyword_status === "Active"
+                                ? "bg-green-600"
+                                : "bg-gray-500"
+                            }`}
+                          >
+                            {data.keyword_status}
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : keywordsData.length > 0 ? (
+                    keywordsData.map((data, index) => (
+                      <tr key={index} className="odd:bg-gray-100 text-center">
+                        <td className="px-4 py-2 border text-left">
+                          {data.keyword}
+                        </td>
+                        <td className="px-4 py-2 border">
+                          {data.search_engine}
+                        </td>
+                        <td className="px-4 py-2 border">{"N/A"}</td>
+                        <td className="px-4 py-2 border">{"N/A"}</td>
+                        <td className="px-4 py-2 border flex justify-center gap-2">
+                          <Button
+                            className="text-white"
+                            disabled={true}
+                            onClick={() => handleSearchPosition(index)}
+                          >
+                            {loading ? (
+                              <FaSync className="animate-spin" />
+                            ) : (
+                              "Check"
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="text-blue-600"
+                            onClick={() => handleHistory(index)}
+                            disabled={true}
+                          >
+                            <FaHistory />
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            className="text-white"
+                            onClick={() => handleDelete(index)}
+                          >
+                            <TfiTrash />
+                          </Button>
+                        </td>
+                        <td className="px-2 py-2 border">
+                          <Button
+                            onClick={() => toggleStatus(index)}
+                            className={`py-2 px-3 text-sm rounded-md text-white ${
+                              data.status === "Active"
+                                ? "bg-green-600"
+                                : "bg-gray-500"
+                            }`}
+                          >
+                            {data.status}
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="text-center py-2">
+                        No keywords found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>
@@ -871,7 +906,7 @@ export default function SingleProjectPage() {
         }`}
       >
         {sidebarMode === "addKeyword" ? (
-          <>
+          <div className="space-y-10">
             <h2 className="mb-6 font-bold">Add New Keyword</h2>
             <div>
               <label className="block">Keyword</label>
@@ -886,6 +921,29 @@ export default function SingleProjectPage() {
               />
               {!newKeyword && isSubmitted && (
                 <p className="text-red-500 text-sm">Keyword is required.</p>
+              )}
+            </div>
+            <div>
+              <label className="block">Search Location</label>
+              <Select
+                onValueChange={(value) => setSelectedSearchLocation(value)}
+                value={selectedSearchLocation || "IN"} // Default to India
+              >
+                <SelectTrigger className="w-[400px]">
+                  <SelectValue>{selectedSearchLocation || "India"}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {locationsList.map((loc) => (
+                    <SelectItem key={loc.code} value={loc.code}>
+                      {loc.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!selectedSearchLocation && isSubmitted && (
+                <p className="text-red-500 text-sm">
+                  Search location is required.
+                </p>
               )}
             </div>
             <div>
@@ -915,7 +973,7 @@ export default function SingleProjectPage() {
                 Cancel
               </Button>
             </div>
-          </>
+          </div>
         ) : (
           <>
             <h2 className="mb-4 text-2xl font-bold text-gray-800 border-b pb-2">
